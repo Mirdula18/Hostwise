@@ -25,7 +25,9 @@ describe("EventPage overview", () => {
     expect(screen.getByRole("heading", { name: "What I assumed" })).toBeInTheDocument();
     expect(screen.getByText(/wheelchair users need step-free entry/)).toBeInTheDocument();
     const glance = screen.getByRole("region", { name: "Budget at a glance" });
-    expect(within(glance).getByText("Total budget").nextElementSibling).toHaveTextContent("₹3,00,000");
+    expect(within(glance).getByText("Total budget").nextElementSibling).toHaveTextContent(
+      "₹3,00,000",
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
 

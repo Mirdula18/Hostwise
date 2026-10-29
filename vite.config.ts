@@ -15,6 +15,7 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/unit/**/*.test.ts", "tests/components/**/*.test.tsx"],
     restoreMocks: true,
+    testTimeout: 20_000,
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "text", "html"],

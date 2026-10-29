@@ -76,3 +76,11 @@ export function allocate(total: number, weights: readonly number[]): number[] {
 export function sum(values: readonly number[]): number {
   return values.reduce((a, b) => a + b, 0);
 }
+
+/** Parses a typed major-unit amount ("1,250.50") into minor units; null if not a valid amount >= 0. */
+export function parseMoney(text: string): number | null {
+  const cleaned = text.replace(/[,\s]/g, "");
+  if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) && n <= 1e10 ? toMinor(n) : null;
+}

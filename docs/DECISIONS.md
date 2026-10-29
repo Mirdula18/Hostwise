@@ -30,6 +30,10 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 24 | 4 | If plan generation fails, the alert offers Try again plus "Use a starter plan instead" (`lib/starterPlan.ts`, priority-weighted, deadlines compressed to the time left). | The app must stay usable without AI (ARCHITECTURE §6); judges may hit quota limits. |
 | 25 | 4 | `title` is an optional intake question; if skipped it defaults to "<Occasion> on <date>". | DATA_MODEL requires a title but PROMPTS lists it outside the required order. |
 | 26 | 4 | The question is an `h2` that receives focus; each control has its own short visible label (e.g. "Number of guests"). | Screen readers hear the new question; every input still has a `<label>`. |
+| 27 | 5 | Source badges are focusable buttons with a `role="tooltip"` explanation shown on hover or focus and linked via `aria-describedby`. | Screen-reader and keyboard users get the same explanation as mouse users. |
+| 28 | 5 | Built-in tasks can be edited, delayed and marked done; only custom tasks can be deleted. | PRD F4: "add, edit and delete custom tasks". |
+| 29 | 5 | The task editor hides tasks that already depend on the task being edited, and the store still rejects any cycle with a clear message. | Prevents most cycles up front; the lib check is the safety net. |
+| 30 | 5 | Vitest `testTimeout` is 20 s. | Long keyboard-driven flows exceed 5 s when the whole suite runs in parallel on Windows; no assertion is weakened. |
 
 ## Open issues
 None yet.

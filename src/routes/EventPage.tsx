@@ -1,8 +1,11 @@
 import { CalendarDays, Users, Wallet } from "lucide-react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { BudgetBoard } from "../components/budget/BudgetBoard";
 import { Overview } from "../components/overview/Overview";
+import { TaskList } from "../components/timeline/TaskList";
 import { PageHeading } from "../components/ui/PageHeading";
 import { TabPanel, Tabs, type TabItem } from "../components/ui/Tabs";
+import { VendorList } from "../components/vendors/VendorList";
 import { format } from "../lib/money";
 import { OCCASION_LABELS } from "../lib/intakeFallback";
 import { todayIso } from "../lib/timeline";
@@ -64,40 +67,9 @@ export default function EventPage() {
       />
       <TabPanel idPrefix="plan" tabKey={tab}>
         {tab === "overview" ? <Overview event={event} today={today} /> : null}
-        {tab === "budget" ? (
-          <section className="space-y-2">
-            <h2 className="text-xl font-bold">Budget</h2>
-            <ul>
-              {event.budget.map((l) => (
-                <li key={l.id}>
-                  {l.category}: {format(l.allocated, profile.currency)}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-        {tab === "timeline" ? (
-          <section className="space-y-2">
-            <h2 className="text-xl font-bold">Timeline</h2>
-            <ul>
-              {event.tasks.map((t) => (
-                <li key={t.id}>
-                  {t.dueDate}: {t.title}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-        {tab === "vendors" ? (
-          <section className="space-y-2">
-            <h2 className="text-xl font-bold">Vendors</h2>
-            <ul>
-              {event.vendors.map((v) => (
-                <li key={v.id}>{v.name}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        {tab === "budget" ? <BudgetBoard event={event} /> : null}
+        {tab === "timeline" ? <TaskList event={event} today={today} /> : null}
+        {tab === "vendors" ? <VendorList event={event} /> : null}
       </TabPanel>
     </article>
   );
