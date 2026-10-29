@@ -16,6 +16,11 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 10 | 1 | Guest-increase options: protect top priority, spread trims, invite half the extra guests (trimming lower priorities), raise the budget. | Allocations always sum to the total, so "fit more guests for free" is never possible; a half-way option is a real trade-off. |
 | 11 | 1 | Delays shift the task and all transitive dependents by the same number of days. | Simplest rule that preserves order (PRD F4 AC). |
 | 12 | 1 | Added `src/lib/plan.ts` (`planToEvent`) and `src/lib/priorities.ts` beyond the listed files. | Plan conversion is shared by intake and the sample event; category→priority mapping is shared by budget and timeline. |
+| 13 | 2 | The function exports a single `onRequest` that returns 405 for non-POST methods instead of `onRequestPost`. | With only `onRequestPost`, other methods would fall through to the SPA `_redirects` rule and return 200. |
+| 14 | 2 | Origin check allows same-origin (covers custom domains), `hostwise.pages.dev` and its preview subdomains, and localhost dev ports; a missing Origin is rejected. | Matches SECURITY.md; browsers always send Origin on POST. Rename the regex if the Pages project is not called `hostwise`. |
+| 15 | 2 | If `GEMINI_MODEL` is empty the function falls back to `gemini-2.5-flash`; model names are restricted to `[\w.-]+`. | Keeps the app working if the variable is forgotten; set the current Flash model in the dashboard. |
+| 16 | 2 | Request schemas in `functions/api/_lib/schemas.ts` import the shared Zod shapes from `src/schemas/event.ts` and are `.strict()`. | One source of truth; unknown keys (e.g. a smuggled `prompt`) are rejected with 400. |
+| 17 | 2 | Rate limiting happens before the body is read; the 413 check runs on both `Content-Length` and the actual byte length. | Cheap rejection first; a missing or false Content-Length cannot bypass the size cap. |
 
 ## Open issues
 None yet.

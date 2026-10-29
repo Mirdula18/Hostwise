@@ -70,3 +70,12 @@ export const VendorQuestions = z.object({
   questions: z.array(z.string().min(1).max(300)).min(1).max(12),
 });
 export type VendorQuestions = z.infer<typeof VendorQuestions>;
+
+export const AITaskName = z.enum([
+  "intake_next",
+  "plan",
+  "parse_change",
+  "rank_options",
+  "vendor_questions",
+]);
+export type AITaskName = z.infer<typeof AITaskName>;

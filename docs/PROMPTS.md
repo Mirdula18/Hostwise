@@ -143,3 +143,8 @@ Keep this updated. It feeds the LinkedIn post.
 | 2 | — | plan | Switched to JSON schema with percents instead of amounts | AI invented prices; money math moved to code |
 | 3 | — | all | Added `<user_data>` delimiting and the shared preamble | Prompt-injection hardening |
 | 4 | — | rank_options | AI ranks code-generated options instead of creating them | Options were inconsistent with real totals |
+| 5 | 2026-10-29 | all | Implemented in `functions/api/_lib/prompts.ts`; `<` inside `<user_data>` is escaped as `\u003c` | Input can no longer close the delimiter and smuggle instructions |
+| 6 | 2026-10-29 | intake_next | Listed the allowed `field` names, the input type per field and the priority options; added "never repeat an asked field" | Free-form field names could not be mapped back to the profile |
+| 7 | 2026-10-29 | parse_change | Input now includes `guestCount` and `totalBudget`; added examples for percentage cuts and matching a delay to a task id | "add 20 guests" and "cut 10%" need the current values to compute absolute numbers |
+| 8 | 2026-10-29 | rank_options | Input includes `categories` (allocated + locked); must rank every option exactly once | The custom option needs real category names and lock state to be valid |
+| 9 | 2026-10-29 | vendor_questions | Added "ask about prices and availability; never state them" | Reinforces rule 2 in the place it is most tempting to break |

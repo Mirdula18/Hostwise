@@ -7,8 +7,8 @@ expect.extend(axeMatchers);
 
 afterEach(() => {
   cleanup();
-  localStorage.clear();
+  if (typeof localStorage !== "undefined") localStorage.clear();
 });
 
 // axe probes <canvas> for colour-contrast; jsdom has no canvas, so report "unsupported" quietly.
-HTMLCanvasElement.prototype.getContext = () => null;
+if (typeof HTMLCanvasElement !== "undefined") HTMLCanvasElement.prototype.getContext = () => null;
