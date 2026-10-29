@@ -21,6 +21,10 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 15 | 2 | If `GEMINI_MODEL` is empty the function falls back to `gemini-2.5-flash`; model names are restricted to `[\w.-]+`. | Keeps the app working if the variable is forgotten; set the current Flash model in the dashboard. |
 | 16 | 2 | Request schemas in `functions/api/_lib/schemas.ts` import the shared Zod shapes from `src/schemas/event.ts` and are `.strict()`. | One source of truth; unknown keys (e.g. a smuggled `prompt`) are rejected with 400. |
 | 17 | 2 | Rate limiting happens before the body is read; the 413 check runs on both `Content-Length` and the actual byte length. | Cheap rejection first; a missing or false Content-Length cannot bypass the size cap. |
+| 18 | 3 | The active tab lives in the URL (`/event/:id?tab=budget`). | Deep links, back button and e2e tests can target a tab directly. |
+| 19 | 3 | Vendor delays from the Timeline go through the change engine (`delayTask` = `applyChange` with a `delay` request), so they appear in the change log and can be undone. | One code path for every change; undo works everywhere. |
+| 20 | 3 | Persisted state is re-validated with Zod on load (`merge` → `migrate`); corrupt events are dropped instead of crashing. | localStorage can be edited or truncated by the user or another tab. |
+| 21 | 3 | Toasts stay 10 s and pause while focused or hovered. | ACCESSIBILITY.md asks for at least 8 s and a reachable Undo. |
 
 ## Open issues
 None yet.
