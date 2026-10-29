@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Secret scan
+        run: |
+          if grep -rEn "AIza[0-9A-Za-z_-]{35}" src functions public; then
+            echo "Possible Google API key committed"; exit 1
+          fi
+      - name: Repo size (tracked files <= 8 MB)
+        run: |
+          size=$(git ls-files -z | xargs -0 du -cb | tail -1 | cut -f1)
+          echo "Tracked bytes: $size"
+          test "$size" -le 8388608
+      - run: npm audit --audit-level=high --omit=dev
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Bundle budget (initial JS <= 200 KB gzip)
+        run: |
+          entry=$(grep -oE 'assets/index-[^"]+\.js' dist/index.html | head -1)
+          size=$(gzip -c "dist/$entry" | wc -c)
+          echo "Initial JS gzip: $size bytes"
+          test "$size" -le 204800
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

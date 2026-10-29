@@ -1,0 +1,56 @@
+# Deployment — Cloudflare Pages
+
+## 1. One-time setup
+1. Push the repo to GitHub as a **public** repository.
+2. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages → Connect to Git** and select the repo.
+3. Build settings:
+
+   | Setting | Value |
+   |---|---|
+   | Framework preset | None (or Vite) |
+   | Build command | `npm run build` |
+   | Build output directory | `dist` |
+   | Root directory | `/` |
+   | Environment variable | `NODE_VERSION` = `20` |
+
+4. Under **Settings → Variables and Secrets**, add these for both Production and Preview:
+   - `GEMINI_API_KEY`, as type **Secret**.
+   - `GEMINI_MODEL`, as plain text, set to a current Gemini Flash model name from Google AI Studio.
+5. Deploy. The `functions/` folder is detected automatically, and `/api/gemini` becomes live.
+
+## 2. CLI alternative
+```bash
+npx wrangler login
+npx wrangler pages project create hostwise
+npx wrangler pages secret put GEMINI_API_KEY --project-name hostwise
+npm run build && npx wrangler pages deploy dist --project-name hostwise
+```
+
+## 3. `wrangler.toml`
+```toml
+name = "hostwise"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+[vars]
+GEMINI_MODEL = ""   # set the real value in the dashboard; never put the key here
+```
+
+## 4. Local development
+```bash
+cp .dev.vars.example .dev.vars   # GEMINI_API_KEY=...  GEMINI_MODEL=...
+npm run dev:api                  # wrangler pages dev --port 8788 -- (serves functions)
+npm run dev                      # vite :5173, proxies /api -> :8788
+```
+
+## 5. Post-deploy checks
+- [ ] Open `https://hostwise.pages.dev` (or your project URL) in an incognito window. It loads with no login.
+- [ ] "Use sample event" works, and an AI action succeeds (the Network tab shows `/api/gemini` returning 200).
+- [ ] The response headers include the CSP (DevTools → Network → document).
+- [ ] Search the page source and JS bundles for `AIza`: no matches.
+- [ ] `curl -X POST https://<url>/api/gemini -d '{}'` returns 400 or 403 and doesn't crash.
+- [ ] Deep link `/event/xyz` loads the SPA (via `_redirects`).
+
+## 6. Optional extras
+- **Web Analytics:** turn it on in the Pages project settings; no code is needed.
+- **WAF rate-limiting rule:** path `/api/*`, 30 requests per minute per IP. This adds protection on top of the in-memory limiter.

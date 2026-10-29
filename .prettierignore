@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+.wrangler
+playwright-report
+test-results
+hostwise-docs
+package-lock.json
+*.md

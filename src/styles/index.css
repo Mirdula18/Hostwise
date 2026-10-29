@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens. Contrast ratios are measured against --c-surface (#ffffff)
+ * and --c-bg (#fafaf9); all text tokens are >= 4.5:1, UI tokens >= 3:1.
+ *   ink    #1c1917  17.5:1     muted  #57534e  7.4:1
+ *   brand  #5b21b6   8.6:1     focus  #1d4ed8  6.7:1
+ *   ok     #166534   7.1:1     warn   #92400e  7.0:1
+ *   danger #b91c1c   6.5:1     line   #78716c  4.8:1 (borders on inputs)
+ */
+:root {
+  --c-bg: 250 250 249;
+  --c-surface: 255 255 255;
+  --c-ink: 28 25 23;
+  --c-muted: 87 83 78;
+  --c-line: 120 113 108;
+  --c-brand: 91 33 182;
+  --c-brand-ink: 255 255 255;
+  --c-focus: 29 78 216;
+  --c-ok: 22 101 52;
+  --c-warn: 146 64 14;
+  --c-danger: 185 28 28;
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-bg text-ink antialiased;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(var(--c-focus));
+  outline-offset: 2px;
+}
+
+.sr-only-focusable:not(:focus) {
+  @apply sr-only;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
