@@ -25,6 +25,11 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 19 | 3 | Vendor delays from the Timeline go through the change engine (`delayTask` = `applyChange` with a `delay` request), so they appear in the change log and can be undone. | One code path for every change; undo works everywhere. |
 | 20 | 3 | Persisted state is re-validated with Zod on load (`merge` → `migrate`); corrupt events are dropped instead of crashing. | localStorage can be edited or truncated by the user or another tab. |
 | 21 | 3 | Toasts stay 10 s and pause while focused or hovered. | ACCESSIBILITY.md asks for at least 8 s and a reachable Undo. |
+| 22 | 4 | Code owns each intake field input type and options (`normalizeQuestion`); the AI only picks the field and wording. Unknown/repeated fields or a premature `done` fall back to the static flow. | Keeps the rank control and validation reliable regardless of AI output. |
+| 23 | 4 | After the first AI failure, intake switches to the static questions for the rest of the session and shows a notice. | Avoids a 20 s timeout on every question. |
+| 24 | 4 | If plan generation fails, the alert offers Try again plus "Use a starter plan instead" (`lib/starterPlan.ts`, priority-weighted, deadlines compressed to the time left). | The app must stay usable without AI (ARCHITECTURE §6); judges may hit quota limits. |
+| 25 | 4 | `title` is an optional intake question; if skipped it defaults to "<Occasion> on <date>". | DATA_MODEL requires a title but PROMPTS lists it outside the required order. |
+| 26 | 4 | The question is an `h2` that receives focus; each control has its own short visible label (e.g. "Number of guests"). | Screen readers hear the new question; every input still has a `<label>`. |
 
 ## Open issues
 None yet.

@@ -39,14 +39,12 @@ describe("useEventStore", () => {
     const e = useEventStore.getState().events.e1;
     if (!e) throw new Error("missing");
     const impact = computeImpact(e, { kind: "budget", newTotal: 90_000 });
-    const r = useEventStore
-      .getState()
-      .applyChange("e1", impact, {
-        id: "x",
-        label: "x",
-        adjustments: [],
-        respectsTopPriority: true,
-      });
+    const r = useEventStore.getState().applyChange("e1", impact, {
+      id: "x",
+      label: "x",
+      adjustments: [],
+      respectsTopPriority: true,
+    });
     expect(r.ok).toBe(false);
     expect(useEventStore.getState().events.e1).toBe(e);
     expect(useEventStore.getState().history.e1).toBeUndefined();

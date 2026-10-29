@@ -1,9 +1,11 @@
 import { CalendarDays, Users, Wallet } from "lucide-react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { Overview } from "../components/overview/Overview";
 import { PageHeading } from "../components/ui/PageHeading";
 import { TabPanel, Tabs, type TabItem } from "../components/ui/Tabs";
 import { format } from "../lib/money";
 import { OCCASION_LABELS } from "../lib/intakeFallback";
+import { todayIso } from "../lib/timeline";
 import { useEvent } from "../store/useEventStore";
 import NotFound from "./NotFound";
 
@@ -24,6 +26,8 @@ export default function EventPage() {
   const [params, setParams] = useSearchParams();
   const tabParam = params.get("tab");
   const tab: TabKey = isTab(tabParam) ? tabParam : "overview";
+
+  const today = todayIso();
 
   if (!event) return <NotFound />;
   const { profile } = event;
@@ -59,12 +63,7 @@ export default function EventPage() {
         onSelect={(key) => setParams({ tab: key }, { replace: true })}
       />
       <TabPanel idPrefix="plan" tabKey={tab}>
-        {tab === "overview" ? (
-          <section className="space-y-2">
-            <h2 className="text-xl font-bold">Overview</h2>
-            {event.theme ? <p>{event.theme}</p> : null}
-          </section>
-        ) : null}
+        {tab === "overview" ? <Overview event={event} today={today} /> : null}
         {tab === "budget" ? (
           <section className="space-y-2">
             <h2 className="text-xl font-bold">Budget</h2>

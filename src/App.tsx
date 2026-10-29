@@ -5,6 +5,7 @@ import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { Toaster } from "./components/ui/Toast";
 
 const Home = lazy(() => import("./routes/Home"));
+const Intake = lazy(() => import("./routes/Intake"));
 const EventPage = lazy(() => import("./routes/EventPage"));
 const NotFound = lazy(() => import("./routes/NotFound"));
 
@@ -50,6 +51,7 @@ export default function App() {
           <Suspense fallback={<p aria-busy="true">Loading…</p>}>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/intake" element={<Intake />} />
               <Route path="/event/:id" element={<EventPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
