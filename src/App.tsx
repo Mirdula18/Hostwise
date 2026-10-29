@@ -25,10 +25,12 @@ export default function App() {
       >
         Skip to main content
       </a>
-      <header className="border-b border-line bg-surface print:hidden">
+      <header className="sticky top-0 z-30 border-b border-edge bg-surface/95 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-2">
           <Link to="/" className="inline-flex min-h-11 items-center gap-2 text-lg font-bold">
-            <PartyPopper aria-hidden="true" className="h-6 w-6 text-brand" />
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-brand-ink">
+              <PartyPopper aria-hidden="true" className="h-5 w-5" />
+            </span>
             Hostwise
           </Link>
           <nav aria-label="Primary">
@@ -60,7 +62,7 @@ export default function App() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      <footer className="border-t border-line bg-surface print:hidden">
+      <footer className="border-t border-edge bg-surface print:hidden">
         <p className="mx-auto max-w-5xl px-4 py-3 text-sm text-muted">
           Your plan is saved in this browser only. Amounts marked “Estimate” are suggestions, not
           vendor prices.

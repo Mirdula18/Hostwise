@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useMemo } from "react";
+import { countdown, formatDate } from "../../lib/display";
 import { isOverdue, todayTop3 } from "../../lib/timeline";
 import type { Event } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
@@ -18,7 +19,7 @@ export function TodayCard({ event, today }: Props) {
   return (
     <section
       aria-labelledby="today-heading"
-      className="rounded-xl border-2 border-brand bg-surface p-4"
+      className="rounded-xl border-2 border-brand bg-brand/5 p-4 shadow-sm"
     >
       <h2 id="today-heading" className="text-lg font-bold">
         Do next
@@ -31,10 +32,16 @@ export function TodayCard({ event, today }: Props) {
       ) : (
         <ol className="mt-2 space-y-2">
           {top.map((t) => (
-            <li key={t.id} className="flex flex-wrap items-center gap-2">
+            <li
+              key={t.id}
+              className="flex flex-wrap items-center gap-2 rounded-lg bg-surface p-2 shadow-sm"
+            >
               <span className="flex-1">
                 <span className="font-semibold">{t.title}</span>
-                <span className="block text-sm text-muted">Due {t.dueDate}</span>
+                <span className="block text-sm text-muted">
+                  Due <time dateTime={t.dueDate}>{formatDate(t.dueDate)}</time> (
+                  {countdown(t.dueDate, today).toLowerCase()})
+                </span>
               </span>
               {isOverdue(t, today) ? (
                 <Badge tone="danger" icon={AlertTriangle}>

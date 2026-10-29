@@ -24,7 +24,7 @@ export function QuoteCompare({ event, category }: Props) {
   if (rows.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+    <div className="overflow-x-auto rounded-xl border border-edge bg-surface shadow-sm">
       <table className="w-full min-w-[36rem] text-left text-sm">
         <caption className="p-3 text-left font-semibold">
           {category} quotes compared with {money(allocated)} allocated

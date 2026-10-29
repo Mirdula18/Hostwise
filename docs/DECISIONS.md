@@ -46,6 +46,11 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 40 | 7 | Upgraded zod 3 → 4 and react-router-dom 6 → 7. | CI's `npm audit --audit-level=high` failed on a high-severity zod advisory; react-router 6 had two moderate ones. Only the AI client's generic signature needed changing. |
 | 41 | 7 | The proxy test uses a fake key that does not match the Google key pattern. | The repo secret scan (and GitHub push protection) would otherwise flag it. |
 | 42 | 7 | Accessible names that differ from visible text now contain it ("Mark done: …", "Unaccept"). | Found by Playwright axe (`label-content-name-mismatch`), which the jsdom axe run does not catch. |
+| 43 | UI | Dates display as "Fri 18 Dec 2026" with a countdown (`lib/display.ts`); forms, diffs and exports keep ISO dates. | Easier to scan; ISO stays where exact values are compared or edited. |
+| 44 | UI | Card borders use a light decorative `edge` token plus a shadow; inputs and controls keep the 4.8:1 `line` border. | Softer look without weakening the 3:1 non-text contrast on interactive controls. |
+| 45 | UI | The event header shows four stat tiles (countdown, guests, tasks done with a progress bar, money still available). | The host sees where things stand without opening a tab. |
+| 46 | UI | The budget split bar is `aria-hidden`; its legend lists every category with its percent. | Colour is never the only carrier of the information. |
+| 47 | UI | The header is sticky, with `scroll-padding-top` so focused elements are never hidden under it. | WCAG 2.4.11 Focus Not Obscured. |
 
 ## Open issues
 1. **Live Gemini not exercised.** No API key was used during the build, so every AI path is tested against mocks and fixtures only. After the first deploy, run one intake and one "add 20 guests" change to confirm the live model accepts the `responseSchema` format in `prompts.ts`. Every failure path falls back gracefully (static questions, starter plan, quick forms, unranked options).

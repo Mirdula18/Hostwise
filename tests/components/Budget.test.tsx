@@ -22,7 +22,9 @@ describe("Budget tab", () => {
 
   it("renders category cards with source badges and no axe violations", async () => {
     const { container } = render(<Board />);
-    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(
+      within(screen.getByRole("list", { name: "Categories" })).getAllByRole("listitem"),
+    ).toHaveLength(5);
     expect(
       within(card("Catering")).getByRole("button", { name: "Estimate" }),
     ).toHaveAccessibleDescription(/not a vendor price/);

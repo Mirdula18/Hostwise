@@ -1,7 +1,8 @@
-import { CalendarDays, Download, Printer, Shuffle, Users, Wallet } from "lucide-react";
+import { Download, Printer, Shuffle } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button, buttonClass } from "../components/ui/Button";
 import { downloadText } from "../components/ui/download";
+import { EventStats } from "../components/overview/EventStats";
 import { RunOfShow } from "../components/overview/RunOfShow";
 import { exportEvents } from "../lib/io";
 import { BudgetBoard } from "../components/budget/BudgetBoard";
@@ -10,7 +11,6 @@ import { TaskList } from "../components/timeline/TaskList";
 import { PageHeading } from "../components/ui/PageHeading";
 import { TabPanel, Tabs, type TabItem } from "../components/ui/Tabs";
 import { VendorList } from "../components/vendors/VendorList";
-import { format } from "../lib/money";
 import { OCCASION_LABELS } from "../lib/intakeFallback";
 import { todayIso } from "../lib/timeline";
 import { useEvent } from "../store/useEventStore";
@@ -41,41 +41,34 @@ export default function EventPage() {
 
   return (
     <article className="space-y-4">
-      <header className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">
-          {OCCASION_LABELS[profile.occasion]}
-        </p>
-        <PageHeading title={profile.title} />
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-          <li className="inline-flex items-center gap-1">
-            <CalendarDays aria-hidden="true" className="h-4 w-4" />
-            {profile.date}
-          </li>
-          <li className="inline-flex items-center gap-1">
-            <Users aria-hidden="true" className="h-4 w-4" />
-            {profile.guestCount} guests
-          </li>
-          <li className="inline-flex items-center gap-1">
-            <Wallet aria-hidden="true" className="h-4 w-4" />
-            {format(profile.totalBudget, profile.currency)} budget
-          </li>
-        </ul>
-        <div className="flex flex-wrap gap-2 print:hidden">
-          <Link to={`/event/${event.id}/change`} className={buttonClass("primary")}>
-            <Shuffle aria-hidden="true" className="h-4 w-4" />
-            What changed?
-          </Link>
-          <Button variant="secondary" onClick={() => window.print()}>
-            <Printer aria-hidden="true" className="h-4 w-4" />
-            Print run-of-show
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => downloadText(`hostwise-${event.id}.json`, exportEvents([event]))}
-          >
-            <Download aria-hidden="true" className="h-4 w-4" />
-            Export this event
-          </Button>
+      <header className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+              {OCCASION_LABELS[profile.occasion]}
+            </p>
+            <PageHeading title={profile.title} />
+          </div>
+          <div className="flex flex-wrap gap-2 print:hidden">
+            <Link to={`/event/${event.id}/change`} className={buttonClass("primary")}>
+              <Shuffle aria-hidden="true" className="h-4 w-4" />
+              What changed?
+            </Link>
+            <Button variant="secondary" onClick={() => window.print()}>
+              <Printer aria-hidden="true" className="h-4 w-4" />
+              Print run-of-show
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => downloadText(`hostwise-${event.id}.json`, exportEvents([event]))}
+            >
+              <Download aria-hidden="true" className="h-4 w-4" />
+              Export this event
+            </Button>
+          </div>
+        </div>
+        <div className="print:hidden">
+          <EventStats event={event} today={today} />
         </div>
       </header>
 

@@ -18,7 +18,7 @@ function VendorCard({ event, vendor }: { event: Event; vendor: Vendor }) {
   const statusId = `vendor-status-${vendor.id}`;
 
   return (
-    <li className="space-y-3 rounded-xl border border-line bg-surface p-4">
+    <li className="space-y-3 rounded-xl border border-edge bg-surface shadow-sm p-4">
       <div className="flex flex-wrap items-start gap-2">
         <div className="mr-auto">
           <h3 className="text-lg font-bold">{vendor.name}</h3>

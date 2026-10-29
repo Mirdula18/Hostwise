@@ -73,6 +73,12 @@ export function ChangeBox({ event, today, busy, onText, onRequest }: Props) {
     }
   };
 
+  const examples = [
+    `Budget is now ${format(Math.round(profile.totalBudget * 0.8), profile.currency)}`,
+    "15 more guests are coming",
+    "The caterer is 5 days late",
+  ];
+
   const openChip = (key: Chip) => {
     setChip(chip === key ? null : key);
     setValue("");
@@ -84,7 +90,7 @@ export function ChangeBox({ event, today, busy, onText, onRequest }: Props) {
       <form onSubmit={submitText} noValidate className="space-y-2">
         <Field
           label="What changed?"
-          hint={`For example: "budget is now ${format(Math.round(profile.totalBudget * 0.8), profile.currency)}", "15 more guests are coming" or "the caterer is 5 days late".`}
+          hint="Describe it in your own words, or start from an example below."
         >
           {(p) => (
             <textarea
@@ -97,6 +103,22 @@ export function ChangeBox({ event, today, busy, onText, onRequest }: Props) {
             />
           )}
         </Field>
+        <div role="group" aria-label="Examples" className="flex flex-wrap items-center gap-2">
+          <span aria-hidden="true" className="text-sm text-muted">
+            Try:
+          </span>
+          {examples.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              aria-label={`Use example: ${ex}`}
+              onClick={() => setText(ex)}
+              className="min-h-11 rounded-full border border-line bg-surface px-3 text-sm hover:border-brand hover:text-brand"
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
         <Button type="submit" disabled={busy}>
           Work out the impact
         </Button>
@@ -133,7 +155,7 @@ export function ChangeBox({ event, today, busy, onText, onRequest }: Props) {
           id="quick-form"
           onSubmit={submitChip}
           noValidate
-          className="space-y-3 rounded-xl border border-line bg-surface p-4"
+          className="space-y-3 rounded-xl border border-edge bg-surface shadow-sm p-4"
         >
           {chip === "budget" ? (
             <Field

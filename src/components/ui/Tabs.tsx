@@ -63,7 +63,7 @@ export function Tabs<K extends string>({ label, tabs, selected, onSelect, idPref
             tabIndex={active ? 0 : -1}
             onClick={() => onSelect(tab.key)}
             onKeyDown={(e) => onKeyDown(e, i)}
-            className={`min-h-11 whitespace-nowrap border-b-4 px-4 text-sm font-semibold ${
+            className={`min-h-11 flex-1 whitespace-nowrap border-b-4 px-2 text-sm font-semibold sm:flex-none sm:px-4 ${
               active ? "border-brand text-brand" : "border-transparent text-muted hover:text-ink"
             }`}
           >

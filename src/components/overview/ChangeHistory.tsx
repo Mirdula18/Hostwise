@@ -13,7 +13,7 @@ export function ChangeHistory({ event }: { event: Event }) {
   return (
     <section
       aria-labelledby="history-heading"
-      className="space-y-2 rounded-xl border border-line bg-surface p-4 md:col-span-2"
+      className="space-y-2 rounded-xl border border-edge bg-surface shadow-sm p-4"
     >
       <h2 id="history-heading" className="flex items-center gap-2 text-lg font-bold">
         <History aria-hidden="true" className="h-5 w-5" />

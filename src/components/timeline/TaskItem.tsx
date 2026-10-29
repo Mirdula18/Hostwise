@@ -1,5 +1,6 @@
 import { AlertTriangle, Clock, Lock, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { formatDate } from "../../lib/display";
 import { blockers, isAtRisk, isOverdue } from "../../lib/timeline";
 import { TaskStatus, type Event, type Task } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
@@ -20,7 +21,7 @@ export function TaskItem({ event, task, today }: Props) {
   const statusId = `status-${task.id}`;
 
   return (
-    <li className="space-y-2 rounded-xl border border-line bg-surface p-3">
+    <li className="space-y-2 rounded-xl border border-edge bg-surface p-3 shadow-sm">
       <div className="flex flex-wrap items-start gap-2">
         <div className="mr-auto">
           <h4
@@ -29,12 +30,42 @@ export function TaskItem({ event, task, today }: Props) {
             {task.title}
           </h4>
           <p className="text-sm text-muted">
-            Due {task.dueDate}
+            Due <time dateTime={task.dueDate}>{formatDate(task.dueDate)}</time>
             {task.category ? ` · ${task.category}` : ""}
             {task.custom ? " · Added by you" : ""}
           </p>
         </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-1">
+          {task.status !== "done" ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setDialog("delay")}
+                aria-label={`Delay ${task.title}`}
+              >
+                <Clock aria-hidden="true" className="h-4 w-4" />
+                Delay
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setDialog("edit")}
+                aria-label={`Edit ${task.title}`}
+              >
+                <Pencil aria-hidden="true" className="h-4 w-4" />
+                Edit
+              </Button>
+              {task.custom ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => deleteTask(event.id, task.id)}
+                  aria-label={`Delete ${task.title}`}
+                >
+                  <Trash2 aria-hidden="true" className="h-4 w-4" />
+                  Delete
+                </Button>
+              ) : null}
+            </>
+          ) : null}
           <label htmlFor={statusId} className="sr-only">
             Status for {task.title}
           </label>
@@ -55,7 +86,7 @@ export function TaskItem({ event, task, today }: Props) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 empty:hidden">
         {waitingOn.length > 0 && task.status !== "done" ? (
           <Badge tone="warn" icon={Lock}>
             Blocked by {waitingOn.map((t) => t.title).join(", ")}
@@ -73,37 +104,6 @@ export function TaskItem({ event, task, today }: Props) {
         ) : null}
         {task.delayDays > 0 ? <Badge icon={Clock}>Delayed {task.delayDays} days</Badge> : null}
       </div>
-
-      {task.status !== "done" ? (
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => setDialog("delay")}
-            aria-label={`Delay ${task.title}`}
-          >
-            <Clock aria-hidden="true" className="h-4 w-4" />
-            Delay
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setDialog("edit")}
-            aria-label={`Edit ${task.title}`}
-          >
-            <Pencil aria-hidden="true" className="h-4 w-4" />
-            Edit
-          </Button>
-          {task.custom ? (
-            <Button
-              variant="ghost"
-              onClick={() => deleteTask(event.id, task.id)}
-              aria-label={`Delete ${task.title}`}
-            >
-              <Trash2 aria-hidden="true" className="h-4 w-4" />
-              Delete
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
 
       {dialog === "delay" ? (
         <DelayDialog event={event} task={task} open onClose={() => setDialog(null)} />

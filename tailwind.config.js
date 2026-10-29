@@ -9,6 +9,7 @@ export default {
         ink: "rgb(var(--c-ink) / <alpha-value>)",
         muted: "rgb(var(--c-muted) / <alpha-value>)",
         line: "rgb(var(--c-line) / <alpha-value>)",
+        edge: "rgb(var(--c-edge) / <alpha-value>)",
         brand: "rgb(var(--c-brand) / <alpha-value>)",
         "brand-ink": "rgb(var(--c-brand-ink) / <alpha-value>)",
         focus: "rgb(var(--c-focus) / <alpha-value>)",

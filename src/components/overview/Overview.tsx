@@ -36,7 +36,7 @@ export function Overview({ event, today }: Props) {
 
       <section
         aria-labelledby="glance-heading"
-        className="rounded-xl border border-line bg-surface p-4"
+        className="rounded-xl border border-edge bg-surface shadow-sm p-4"
       >
         <h2 id="glance-heading" className="text-lg font-bold">
           Budget at a glance
@@ -67,7 +67,7 @@ export function Overview({ event, today }: Props) {
       {event.theme ? (
         <section
           aria-labelledby="theme-heading"
-          className="rounded-xl border border-line bg-surface p-4"
+          className="rounded-xl border border-edge bg-surface shadow-sm p-4"
         >
           <h2 id="theme-heading" className="text-lg font-bold">
             Theme idea
@@ -78,7 +78,7 @@ export function Overview({ event, today }: Props) {
 
       <section
         aria-labelledby="assumed-heading"
-        className="rounded-xl border border-line bg-surface p-4"
+        className="rounded-xl border border-edge bg-surface shadow-sm p-4"
       >
         <h2 id="assumed-heading" className="flex items-center gap-2 text-lg font-bold">
           <Lightbulb aria-hidden="true" className="h-5 w-5 text-warn" />
@@ -98,7 +98,7 @@ export function Overview({ event, today }: Props) {
 
       <section
         aria-labelledby="about-heading"
-        className="rounded-xl border border-line bg-surface p-4 md:col-span-2"
+        className="rounded-xl border border-edge bg-surface shadow-sm p-4 md:col-span-2"
       >
         <h2 id="about-heading" className="text-lg font-bold">
           About this event

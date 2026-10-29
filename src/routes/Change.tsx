@@ -33,7 +33,7 @@ function ImpactSummary({ event, impact }: { event: Event; impact: Impact }) {
   return (
     <section
       aria-labelledby="impact-heading"
-      className="space-y-2 rounded-xl border border-line bg-surface p-4"
+      className="space-y-2 rounded-xl border border-edge bg-surface shadow-sm p-4"
     >
       <h2 id="impact-heading" className="text-xl font-bold">
         Impact

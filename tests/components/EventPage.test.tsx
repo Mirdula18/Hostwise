@@ -1,6 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
+import { formatDate } from "../../src/lib/display";
 import { createSampleEvent } from "../../src/lib/sample";
 import EventPage from "../../src/routes/EventPage";
 import { useEventStore } from "../../src/store/useEventStore";
@@ -29,6 +30,22 @@ describe("EventPage overview", () => {
       "₹3,00,000",
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("shows the countdown, readable date and task progress in the header", async () => {
+    const user = userEvent.setup();
+    const { event } = setup();
+    const tile = screen.getByText("Event day").parentElement as HTMLElement;
+    expect(tile).toHaveTextContent(/days to go/);
+    expect(within(tile).getByText(formatDate(event.profile.date))).toBeInTheDocument();
+    const bar = screen.getByRole("progressbar", { name: "Tasks done" });
+    expect(bar).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByText(`0 of ${event.tasks.length}`)).toBeInTheDocument();
+
+    const card = screen.getByRole("region", { name: "Do next" });
+    await user.click(within(card).getByRole("button", { name: /^Mark done: Confirm date/ }));
+    expect(screen.getByText(`1 of ${event.tasks.length}`)).toBeInTheDocument();
+    expect(Number(bar.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
   });
 
   it("updates the Do next card immediately when a task is completed", async () => {

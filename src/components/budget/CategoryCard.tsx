@@ -21,7 +21,7 @@ export function CategoryCard({ eventId, line, currency, isPriority }: Props) {
   return (
     <li
       aria-labelledby={headingId}
-      className={`space-y-2 rounded-xl border bg-surface p-4 ${s.over ? "border-danger" : "border-line"}`}
+      className={`space-y-2 rounded-xl border bg-surface p-4 shadow-sm ${s.over ? "border-2 border-danger" : "border-edge"}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         <h3 id={headingId} className="mr-auto text-lg font-bold">

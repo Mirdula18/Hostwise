@@ -116,6 +116,15 @@ describe("Change flow", () => {
     expect(allocated("food")).toBe(40_000);
   });
 
+  it("fills the text box from an example chip", async () => {
+    const user = userEvent.setup();
+    renderChange();
+    await user.click(
+      screen.getByRole("button", { name: "Use example: 15 more guests are coming" }),
+    );
+    expect(screen.getByLabelText("What changed?")).toHaveValue("15 more guests are coming");
+  });
+
   it("asks the clarifying question when the change is unclear", async () => {
     const user = userEvent.setup();
     mockAI({
