@@ -6,6 +6,7 @@ import { FIELD_SPECS, type IntakeField } from "../../lib/intakeFallback";
 import { format } from "../../lib/money";
 import type { Event } from "../../schemas/event";
 import { TodayCard } from "../timeline/TodayCard";
+import { ChangeHistory } from "./ChangeHistory";
 import { Badge } from "../ui/Badge";
 
 const PROFILE_ROWS: [IntakeField, string][] = [
@@ -31,6 +32,7 @@ export function Overview({ event, today }: Props) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <TodayCard event={event} today={today} />
+      <ChangeHistory event={event} />
 
       <section
         aria-labelledby="glance-heading"

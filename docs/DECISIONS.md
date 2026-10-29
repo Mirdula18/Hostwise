@@ -34,6 +34,11 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 28 | 5 | Built-in tasks can be edited, delayed and marked done; only custom tasks can be deleted. | PRD F4: "add, edit and delete custom tasks". |
 | 29 | 5 | The task editor hides tasks that already depend on the task being edited, and the store still rejects any cycle with a clear message. | Prevents most cycles up front; the lib check is the safety net. |
 | 30 | 5 | Vitest `testTimeout` is 20 s. | Long keyboard-driven flows exceed 5 s when the whole suite runs in parallel on Windows; no assertion is weakened. |
+| 31 | 6 | Free-text submissions to `parse_change` are debounced by 500 ms; quick-form chips build a `ChangeRequest` directly and skip the AI. | CLAUDE.md rule 7, and the change engine must work without AI. |
+| 32 | 6 | `checkChange` rejects no-op changes, past dates and unknown task ids before the engine runs; `unclear` shows the AI clarifying question. | Gives the host something to act on instead of a confusing empty option list. |
+| 33 | 6 | `rank_options` is skipped when there is only one option (date and delay changes). | Saves a Gemini call when there is nothing to rank. |
+| 34 | 6 | The preview is produced by running the real `applyOption` on a copy and diffing (`diffEvents`), so the preview and the applied result cannot disagree. | One source of truth for the numbers. |
+| 35 | 6 | After Apply the user returns to the event Overview, where the change log and a toast with Undo are shown. | Matches the PRD flow: apply → see result → undo. |
 
 ## Open issues
 None yet.

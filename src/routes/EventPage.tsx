@@ -1,5 +1,6 @@
-import { CalendarDays, Users, Wallet } from "lucide-react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { CalendarDays, Shuffle, Users, Wallet } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { buttonClass } from "../components/ui/Button";
 import { BudgetBoard } from "../components/budget/BudgetBoard";
 import { Overview } from "../components/overview/Overview";
 import { TaskList } from "../components/timeline/TaskList";
@@ -56,6 +57,10 @@ export default function EventPage() {
             {format(profile.totalBudget, profile.currency)} budget
           </li>
         </ul>
+        <Link to={`/event/${event.id}/change`} className={buttonClass("primary", "print:hidden")}>
+          <Shuffle aria-hidden="true" className="h-4 w-4" />
+          What changed?
+        </Link>
       </header>
 
       <Tabs

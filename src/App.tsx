@@ -7,6 +7,7 @@ import { Toaster } from "./components/ui/Toast";
 const Home = lazy(() => import("./routes/Home"));
 const Intake = lazy(() => import("./routes/Intake"));
 const EventPage = lazy(() => import("./routes/EventPage"));
+const Change = lazy(() => import("./routes/Change"));
 const NotFound = lazy(() => import("./routes/NotFound"));
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/intake" element={<Intake />} />
               <Route path="/event/:id" element={<EventPage />} />
+              <Route path="/event/:id/change" element={<Change />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
