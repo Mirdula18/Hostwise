@@ -7,7 +7,7 @@ import { gzipSync } from "node:zlib";
 const MAX_TRACKED_BYTES = 8 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 200 * 1024;
 const MAX_INITIAL_JS_GZIP = 200 * 1024;
-const KEY_PATTERN = /AIza[0-9A-Za-z_-]{35}/;
+const KEY_PATTERN = /AIza[0-9A-Za-z_-]{35}|AQ\.[0-9A-Za-z_-]{40,}/;
 const FORBIDDEN = [
   /(^|\/)node_modules\//,
   /^dist\//,
