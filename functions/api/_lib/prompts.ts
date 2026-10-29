@@ -198,10 +198,15 @@ export function buildPrompt(task: TaskName, input: unknown): { system: string; u
   };
 }
 
-export const MAX_OUTPUT_TOKENS = 2048;
+/** Thinking tokens count toward this cap, so it leaves room for the full plan JSON. */
+export const MAX_OUTPUT_TOKENS = 8192;
+
+/** Gemini 3 models think by default; low keeps latency inside the proxy timeout. */
+const thinkingConfig = (model: string) =>
+  /^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: "low" } } : {};
 
 /** The generateContent request body for a task. */
-export function buildGeminiRequest(task: TaskName, input: unknown) {
+export function buildGeminiRequest(task: TaskName, input: unknown, model = "") {
   const { system, user } = buildPrompt(task, input);
   const t = TEMPLATES[task];
   return {
@@ -212,6 +217,7 @@ export function buildGeminiRequest(task: TaskName, input: unknown) {
       responseSchema: t.schema,
       temperature: t.temperature,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
+      ...thinkingConfig(model),
     },
   };
 }

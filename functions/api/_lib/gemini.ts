@@ -44,7 +44,7 @@ export async function callGemini(
       {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify(buildGeminiRequest(task, input)),
+        body: JSON.stringify(buildGeminiRequest(task, input, model)),
         signal: controller.signal,
       },
     );

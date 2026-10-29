@@ -56,5 +56,15 @@ describe("prompt templates", () => {
     });
     expect(buildGeminiRequest("plan", {}).generationConfig.temperature).toBe(0.4);
     expect(body.contents[0]?.parts[0]?.text).toContain("<user_data>");
+    expect(body.generationConfig).not.toHaveProperty("thinkingConfig");
+  });
+
+  it("keeps thinking low on Gemini 3 models only", () => {
+    expect(buildGeminiRequest("plan", {}, "gemini-3.8-flash").generationConfig).toMatchObject({
+      thinkingConfig: { thinkingLevel: "low" },
+    });
+    expect(buildGeminiRequest("plan", {}, "gemini-2.5-flash").generationConfig).not.toHaveProperty(
+      "thinkingConfig",
+    );
   });
 });

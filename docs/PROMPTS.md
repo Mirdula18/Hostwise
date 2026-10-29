@@ -148,3 +148,4 @@ Keep this updated. It feeds the LinkedIn post.
 | 7 | 2026-10-29 | parse_change | Input now includes `guestCount` and `totalBudget`; added examples for percentage cuts and matching a delay to a task id | "add 20 guests" and "cut 10%" need the current values to compute absolute numbers |
 | 8 | 2026-10-29 | rank_options | Input includes `categories` (allocated + locked); must rank every option exactly once | The custom option needs real category names and lock state to be valid |
 | 9 | 2026-10-29 | vendor_questions | Added "ask about prices and availability; never state them" | Reinforces rule 2 in the place it is most tempting to break |
+| 10 | 2026-10-30 | all | `maxOutputTokens` 2048 → 8192; `thinkingLevel: "low"` on `gemini-3*` models | Live test: Gemini 3 Flash thinking tokens used up the cap, so the plan JSON was cut off (`bad_output`) |
