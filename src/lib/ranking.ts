@@ -81,8 +81,8 @@ export function checkChange(
   }
 }
 
-export type DiffLine = { category: string; before: number; after: number; delta: number };
-export type DiffTask = { id: string; title: string; before: string; after: string };
+type DiffLine = { category: string; before: number; after: number; delta: number };
+type DiffTask = { id: string; title: string; before: string; after: string };
 export type EventDiff = {
   lines: DiffLine[];
   total: { before: number; after: number };

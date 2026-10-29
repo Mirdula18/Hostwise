@@ -43,7 +43,7 @@ export function TodayCard({ event, today }: Props) {
               ) : null}
               <Button
                 variant="secondary"
-                aria-label={`Mark "${t.title}" done`}
+                aria-label={`Mark done: ${t.title}`}
                 onClick={() => updateTask(event.id, t.id, { status: "done" })}
               >
                 Mark done

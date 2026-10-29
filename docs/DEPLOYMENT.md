@@ -23,6 +23,7 @@
 npx wrangler login
 npx wrangler pages project create hostwise
 npx wrangler pages secret put GEMINI_API_KEY --project-name hostwise
+npx wrangler pages secret put GEMINI_MODEL --project-name hostwise   # or set it as plain text in the dashboard
 npm run build && npx wrangler pages deploy dist --project-name hostwise
 ```
 
@@ -31,15 +32,16 @@ npm run build && npx wrangler pages deploy dist --project-name hostwise
 name = "hostwise"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
-
-[vars]
-GEMINI_MODEL = ""   # set the real value in the dashboard; never put the key here
 ```
+There is deliberately no `[vars]` block. When a Pages project has a `wrangler.toml`, plain variables in it override the dashboard, so an empty `GEMINI_MODEL` there would hide the value you set in step 4. If `GEMINI_MODEL` is unset, the function falls back to `gemini-2.5-flash`.
+
+The origin allow-list in `functions/api/gemini.ts` accepts `hostwise.pages.dev` and its preview subdomains. If your Pages project has a different name, update `PAGES_ORIGIN` there (same-origin requests on a custom domain are always allowed).
 
 ## 4. Local development
 ```bash
 cp .dev.vars.example .dev.vars   # GEMINI_API_KEY=...  GEMINI_MODEL=...
-npm run dev:api                  # wrangler pages dev --port 8788 -- (serves functions)
+npm run build                    # once, so wrangler has a dist/ to serve
+npm run dev:api                  # wrangler pages dev --port 8788 (serves functions)
 npm run dev                      # vite :5173, proxies /api -> :8788
 ```
 

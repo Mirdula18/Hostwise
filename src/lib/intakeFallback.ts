@@ -4,9 +4,9 @@ import { PRIORITY_LABELS } from "./priorities";
 
 export type IntakeField = keyof EventProfile;
 export type IntakeAnswers = Partial<EventProfile>;
-export type Choice = { value: string; label: string };
+type Choice = { value: string; label: string };
 
-export type FieldSpec = {
+type FieldSpec = {
   question: string;
   inputType: InputType;
   required: boolean;
@@ -117,7 +117,7 @@ export const REQUIRED_ORDER: IntakeField[] = [
 ];
 
 /** Optional follow-ups that matter most for each occasion (at most 4 are asked). */
-export const OPTIONAL_BY_OCCASION: Record<Occasion, IntakeField[]> = {
+const OPTIONAL_BY_OCCASION: Record<Occasion, IntakeField[]> = {
   kids_birthday: ["ageMix", "dietary", "setting", "title"],
   anniversary: ["ageMix", "accessibility", "dietary", "culturalContext"],
   birthday: ["title", "setting", "dietary", "city"],

@@ -2,5 +2,6 @@ name = "hostwise"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
 
-[vars]
-GEMINI_MODEL = ""   # set the real value in the dashboard; never put the key here
+# GEMINI_API_KEY (secret) and GEMINI_MODEL (plain text) are set in the Cloudflare
+# dashboard or with `wrangler pages secret put`. Do not add a [vars] block here:
+# with wrangler.toml present, its vars would override the dashboard values.

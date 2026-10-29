@@ -146,7 +146,7 @@ export const Impact = z.object({
 });
 export type Impact = z.infer<typeof Impact>;
 
-export const ChangeLogEntry = z.object({ at: z.string(), summary: z.string() });
+const ChangeLogEntry = z.object({ at: z.string(), summary: z.string() });
 
 export const Event = z.object({
   id: z.string(),

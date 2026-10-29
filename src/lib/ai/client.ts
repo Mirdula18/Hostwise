@@ -1,8 +1,8 @@
-import type { ZodType, ZodTypeDef } from "zod";
+import type { ZodType } from "zod";
 import type { AITaskName } from "../../schemas/ai";
 import { cacheKey, LRUCache } from "./cache";
 
-export type AIErrorCode =
+type AIErrorCode =
   | "timeout"
   | "network"
   | "rate_limited"
@@ -28,12 +28,12 @@ export class AIError extends Error {
   }
 }
 
-export const CLIENT_TIMEOUT_MS = 20_000;
-export const ENDPOINT = "/api/gemini";
+const CLIENT_TIMEOUT_MS = 20_000;
+const ENDPOINT = "/api/gemini";
 
 const sharedCache = new LRUCache<unknown>(50);
 
-export type CallOptions = {
+type CallOptions = {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   signal?: AbortSignal;
@@ -92,10 +92,10 @@ async function post(
   }
 }
 
-function describeIssues(issues: { path: (string | number)[]; message: string }[]): string {
+function describeIssues(issues: readonly { path: PropertyKey[]; message: string }[]): string {
   return issues
     .slice(0, 5)
-    .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
+    .map((i) => `${i.path.map(String).join(".") || "(root)"}: ${i.message}`)
     .join("; ");
 }
 
@@ -107,7 +107,7 @@ function describeIssues(issues: { path: (string | number)[]; message: string }[]
 export async function callAI<T>(
   task: AITaskName,
   input: Record<string, unknown>,
-  schema: ZodType<T, ZodTypeDef, unknown>,
+  schema: ZodType<T>,
   options: CallOptions = {},
 ): Promise<T> {
   const cache = options.cache === undefined ? sharedCache : options.cache;

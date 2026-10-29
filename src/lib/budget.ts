@@ -57,7 +57,7 @@ export function trimOrder(
 }
 
 /** Weight used when sharing extra money out: the top priority gets the most. */
-export function priorityWeight(line: BudgetLine, priorities: readonly Priority[]): number {
+function priorityWeight(line: BudgetLine, priorities: readonly Priority[]): number {
   return priorities.length + 1 - priorityRank(line.priorityTag, priorities);
 }
 
@@ -95,7 +95,7 @@ export function giveByPriority(
   return new Map(recipients.map((l, i) => [l.id, parts[i] ?? 0]));
 }
 
-export function applyDeltas(
+function applyDeltas(
   lines: readonly BudgetLine[],
   deltas: ReadonlyMap<string, number>,
 ): BudgetLine[] {
@@ -200,7 +200,7 @@ export function scaleForGuests(
   );
 }
 
-export type LineStatus = {
+type LineStatus = {
   used: number;
   remaining: number;
   over: boolean;
@@ -217,7 +217,7 @@ export function lineStatus(line: BudgetLine): LineStatus {
   return { used, remaining, over: remaining < 0, overBy: Math.max(0, -remaining), percentUsed };
 }
 
-export type BudgetSummary = {
+type BudgetSummary = {
   total: number;
   allocated: number;
   committed: number;

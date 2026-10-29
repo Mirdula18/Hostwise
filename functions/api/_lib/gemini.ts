@@ -5,14 +5,14 @@ export type GeminiEnv = { GEMINI_API_KEY?: string; GEMINI_MODEL?: string };
 
 /** Used only when GEMINI_MODEL is not set; override it in the Pages dashboard. */
 export const DEFAULT_MODEL = "gemini-2.5-flash";
-export const TIMEOUT_MS = 20_000;
+const TIMEOUT_MS = 20_000;
 
-export type GeminiFailure = {
+type GeminiFailure = {
   status: 502 | 503 | 504;
   code: "upstream_error" | "bad_output" | "timeout" | "not_configured";
 };
 
-export type GeminiResult = { ok: true; data: unknown } | { ok: false; failure: GeminiFailure };
+type GeminiResult = { ok: true; data: unknown } | { ok: false; failure: GeminiFailure };
 
 type GenerateContentResponse = {
   candidates?: { content?: { parts?: { text?: string }[] } }[];

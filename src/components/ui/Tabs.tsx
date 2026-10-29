@@ -10,8 +10,8 @@ type Props<K extends string> = {
   idPrefix: string;
 };
 
-export const tabId = (prefix: string, key: string) => `${prefix}-tab-${key}`;
-export const panelId = (prefix: string, key: string) => `${prefix}-panel-${key}`;
+const tabId = (prefix: string, key: string) => `${prefix}-tab-${key}`;
+const panelId = (prefix: string, key: string) => `${prefix}-panel-${key}`;
 
 /** WAI-ARIA tabs with automatic activation: arrows, Home and End move between tabs. */
 export function Tabs<K extends string>({ label, tabs, selected, onSelect, idPrefix }: Props<K>) {

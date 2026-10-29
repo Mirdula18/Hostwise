@@ -102,7 +102,7 @@ export function topoSort(tasks: readonly Task[]): Task[] {
 }
 
 /** id -> ids of tasks that directly depend on it. */
-export function dependentsMap(tasks: readonly Pick<Task, "id" | "dependsOn">[]): Graph {
+function dependentsMap(tasks: readonly Pick<Task, "id" | "dependsOn">[]): Graph {
   const map: Graph = new Map(tasks.map((t) => [t.id, []]));
   for (const t of tasks) {
     for (const d of t.dependsOn) map.get(d)?.push(t.id);
@@ -124,7 +124,7 @@ export function transitiveDependents(tasks: readonly Task[], id: string): string
   return [...seen];
 }
 
-export type ToDatesResult = { tasks: Task[]; notes: string[] };
+type ToDatesResult = { tasks: Task[]; notes: string[] };
 
 /**
  * Converts AI tasks (offsets in days before the event, key-based deps) into dated tasks.
@@ -195,7 +195,7 @@ export function isOverdue(task: Task, today: string): boolean {
   return task.status !== "done" && task.dueDate < today;
 }
 
-export type ShiftResult = { tasks: Task[]; affectedIds: string[]; atRiskIds: string[] };
+type ShiftResult = { tasks: Task[]; affectedIds: string[]; atRiskIds: string[] };
 
 /**
  * Delays a task by `days` and moves every transitive dependent by the same amount,

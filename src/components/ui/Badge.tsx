@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-export type Tone = "neutral" | "brand" | "ok" | "warn" | "danger";
+type Tone = "neutral" | "brand" | "ok" | "warn" | "danger";
 
 const TONES: Record<Tone, string> = {
   neutral: "border-line text-muted",

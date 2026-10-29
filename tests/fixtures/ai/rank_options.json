@@ -1,0 +1,21 @@
+{
+  "data": {
+    "ranking": [
+      {
+        "optionId": "protect",
+        "why": "Food is your top priority, so catering grows with the guest list while décor and favours give way.",
+        "whatTheyGiveUp": "Simpler décor and smaller favours."
+      },
+      {
+        "optionId": "trim-guests",
+        "why": "Inviting fewer extra guests keeps Food and Guest comfort generous for everyone.",
+        "whatTheyGiveUp": "Some people you hoped to invite."
+      },
+      {
+        "optionId": "raise-budget",
+        "why": "Nothing is cut, so every priority stays intact.",
+        "whatTheyGiveUp": "You spend more than planned."
+      }
+    ]
+  }
+}

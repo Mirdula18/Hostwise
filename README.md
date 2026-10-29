@@ -3,6 +3,10 @@
 **An AI co-planner for celebrations on a real budget.** Tell Hostwise what you're celebrating, how many people are coming, and what matters most. It builds a budget, a timeline and a vendor checklist, and it keeps them in sync when things change.
 
 > Live demo: `https://<your-project>.pages.dev` · Video walkthrough: `<unlisted link>`
+>
+> _Before submitting, replace both placeholders: the Pages URL from Cloudflare (see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)) and the unlisted YouTube or Drive link to the demo video._
+>
+> **Judges:** click **Use sample event** on the home page to explore a full plan without answering any questions.
 
 ## The problem
 - A party lasts an evening; planning it takes weeks.
@@ -47,16 +51,32 @@ Browser (React SPA) ──POST /api/gemini──▶ Cloudflare Pages Function �
 ```bash
 git clone <repo> && cd hostwise
 npm install
-cp .dev.vars.example .dev.vars      # put your Gemini key here (gitignored)
+cp .dev.vars.example .dev.vars      # put your Gemini key and model here (gitignored)
+npm run build                       # once, so wrangler has a dist/ to serve
 npm run dev:api                     # terminal 1: Pages Functions on :8788
 npm run dev                         # terminal 2: app on :5173
 ```
 
 ## Quality gates
 ```bash
-npm run check   # lint + typecheck + unit/component tests + build
-npm run test:e2e
+npm run check     # lint + typecheck + unit/component tests (coverage-gated) + build
+npm run test:e2e  # Playwright journey with intercepted AI and axe on every tab
+npm run verify    # no secrets, no forbidden files, repo < 8 MB, initial JS < 200 KB gzip
 ```
+
+## Works without AI
+If Gemini is unreachable, intake switches to built-in questions, plan generation offers a starter plan, the change engine takes typed quick inputs, and trade-off options are shown unranked. Budget, timeline and vendor edits never need the network.
+
+## Project docs
+| Doc | Contents |
+|---|---|
+| [`docs/PRD.md`](docs/PRD.md) | Problem, persona, features and acceptance criteria |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Folders, data flow, proxy |
+| [`docs/PROMPTS.md`](docs/PROMPTS.md) | Prompts, schemas and their evolution |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Choices made during the build, and open issues |
+| [`docs/EVALUATION_MAP.md`](docs/EVALUATION_MAP.md) | Where to find evidence for each judging criterion |
+
+Screenshots and the demo video stay out of the repo (`screenshots/` and video files are gitignored).
 
 ## Security
 - The API key lives only as a Cloudflare secret and never reaches the browser.

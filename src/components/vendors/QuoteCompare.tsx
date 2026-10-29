@@ -80,7 +80,7 @@ export function QuoteCompare({ event, category }: Props) {
                     aria-label={`Unaccept ${r.vendorName} quote`}
                     onClick={() => unacceptQuote(event.id, r.vendorId, r.quote.id)}
                   >
-                    Accepted · Undo
+                    Unaccept
                   </Button>
                 ) : (
                   <Button

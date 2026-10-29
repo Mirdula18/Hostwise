@@ -3,7 +3,7 @@ import { callGemini, DEFAULT_MODEL } from "../../functions/api/_lib/gemini";
 import { RateLimiter } from "../../functions/api/_lib/rateLimit";
 import { createHandler, isAllowedOrigin, MAX_BODY_BYTES } from "../../functions/api/gemini";
 
-const KEY = "AIzaTEST_KEY_never_leak_0123456789abcdefgh";
+const KEY = "test-secret-key-that-must-never-leak-9876";
 const env = { GEMINI_API_KEY: KEY, GEMINI_MODEL: "gemini-test-flash" };
 const URL_ = "https://hostwise.pages.dev/api/gemini";
 const ORIGIN = "https://hostwise.pages.dev";

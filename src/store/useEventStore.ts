@@ -79,7 +79,7 @@ type Actions = {
   importEvents: (text: string) => Result<number, string>;
 };
 
-export type EventStore = State & Actions;
+type EventStore = State & Actions;
 
 const now = () => new Date().toISOString();
 

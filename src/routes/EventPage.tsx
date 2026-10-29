@@ -1,6 +1,9 @@
-import { CalendarDays, Shuffle, Users, Wallet } from "lucide-react";
+import { CalendarDays, Download, Printer, Shuffle, Users, Wallet } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { buttonClass } from "../components/ui/Button";
+import { Button, buttonClass } from "../components/ui/Button";
+import { downloadText } from "../components/ui/download";
+import { RunOfShow } from "../components/overview/RunOfShow";
+import { exportEvents } from "../lib/io";
 import { BudgetBoard } from "../components/budget/BudgetBoard";
 import { Overview } from "../components/overview/Overview";
 import { TaskList } from "../components/timeline/TaskList";
@@ -57,25 +60,41 @@ export default function EventPage() {
             {format(profile.totalBudget, profile.currency)} budget
           </li>
         </ul>
-        <Link to={`/event/${event.id}/change`} className={buttonClass("primary", "print:hidden")}>
-          <Shuffle aria-hidden="true" className="h-4 w-4" />
-          What changed?
-        </Link>
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <Link to={`/event/${event.id}/change`} className={buttonClass("primary")}>
+            <Shuffle aria-hidden="true" className="h-4 w-4" />
+            What changed?
+          </Link>
+          <Button variant="secondary" onClick={() => window.print()}>
+            <Printer aria-hidden="true" className="h-4 w-4" />
+            Print run-of-show
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => downloadText(`hostwise-${event.id}.json`, exportEvents([event]))}
+          >
+            <Download aria-hidden="true" className="h-4 w-4" />
+            Export this event
+          </Button>
+        </div>
       </header>
 
-      <Tabs
-        label="Plan sections"
-        idPrefix="plan"
-        tabs={TABS}
-        selected={tab}
-        onSelect={(key) => setParams({ tab: key }, { replace: true })}
-      />
-      <TabPanel idPrefix="plan" tabKey={tab}>
-        {tab === "overview" ? <Overview event={event} today={today} /> : null}
-        {tab === "budget" ? <BudgetBoard event={event} /> : null}
-        {tab === "timeline" ? <TaskList event={event} today={today} /> : null}
-        {tab === "vendors" ? <VendorList event={event} /> : null}
-      </TabPanel>
+      <div className="print:hidden">
+        <Tabs
+          label="Plan sections"
+          idPrefix="plan"
+          tabs={TABS}
+          selected={tab}
+          onSelect={(key) => setParams({ tab: key }, { replace: true })}
+        />
+        <TabPanel idPrefix="plan" tabKey={tab}>
+          {tab === "overview" ? <Overview event={event} today={today} /> : null}
+          {tab === "budget" ? <BudgetBoard event={event} /> : null}
+          {tab === "timeline" ? <TaskList event={event} today={today} /> : null}
+          {tab === "vendors" ? <VendorList event={event} /> : null}
+        </TabPanel>
+      </div>
+      <RunOfShow event={event} />
     </article>
   );
 }

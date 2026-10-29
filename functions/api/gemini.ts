@@ -51,7 +51,7 @@ function fail(code: ErrorCode, status: number, extra?: Record<string, string>): 
   return json({ error: { code, message: MESSAGES[code] } }, status, extra);
 }
 
-export type HandlerDeps = { fetchImpl?: typeof fetch; limiter?: RateLimiter; now?: () => number };
+type HandlerDeps = { fetchImpl?: typeof fetch; limiter?: RateLimiter; now?: () => number };
 
 export function createHandler({
   fetchImpl = (...args) => fetch(...args),

@@ -37,7 +37,9 @@ describe("EventPage overview", () => {
     const card = screen.getByRole("region", { name: "Do next" });
     const first = within(card).getAllByRole("listitem")[0];
     expect(first).toHaveTextContent("Confirm date with parents");
-    await user.click(within(card).getByRole("button", { name: /Mark "Confirm date with parents/ }));
+    await user.click(
+      within(card).getByRole("button", { name: /Mark done: Confirm date with parents/ }),
+    );
     expect(within(card).queryByText(/Confirm date with parents/)).not.toBeInTheDocument();
     expect(within(card).getAllByRole("listitem")[0]).toHaveTextContent(
       /Draft the guest list|Shortlist/,
@@ -51,6 +53,23 @@ describe("EventPage overview", () => {
     screen.getByRole("tab", { name: "Budget" }).focus();
     await user.keyboard("{ArrowRight}");
     expect(screen.getByRole("tab", { name: "Timeline" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("prints a run-of-show and exports the event as JSON", async () => {
+    const user = userEvent.setup();
+    const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    const createObjectURL = vi.fn(() => "blob:x");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const { event } = setup();
+    const show = screen.getByRole("region", { name: "Run of show" });
+    const tasks = within(show).getByRole("table", { name: "Tasks" });
+    expect(within(tasks).getAllByRole("row")).toHaveLength(event.tasks.length + 1);
+    expect(within(show).getByRole("table", { name: "Budget" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Print run-of-show" }));
+    expect(print).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Export this event" }));
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
   });
 
   it("shows not found for an unknown event", () => {

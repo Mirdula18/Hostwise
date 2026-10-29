@@ -3,7 +3,7 @@ import { useId, type ReactNode } from "react";
 export const inputClass =
   "block w-full min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-ink aria-[invalid=true]:border-danger";
 
-export type ControlProps = {
+type ControlProps = {
   id: string;
   "aria-describedby"?: string;
   "aria-invalid"?: true;

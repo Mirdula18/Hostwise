@@ -39,6 +39,18 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 33 | 6 | `rank_options` is skipped when there is only one option (date and delay changes). | Saves a Gemini call when there is nothing to rank. |
 | 34 | 6 | The preview is produced by running the real `applyOption` on a copy and diffing (`diffEvents`), so the preview and the applied result cannot disagree. | One source of truth for the numbers. |
 | 35 | 6 | After Apply the user returns to the event Overview, where the change log and a toast with Undo are shown. | Matches the PRD flow: apply → see result → undo. |
+| 36 | 7 | The run-of-show is a print-only section (`RunOfShow`) on the event page: details, tasks in dependency/date order, budget table and booked vendors. Header, nav, tabs and buttons are `print:hidden`. | One click prints a usable sheet without a separate route. |
+| 37 | 7 | A single `ErrorBoundary` around the routes resets on every path change, which acts as a per-route boundary. | Same behaviour with less code. |
+| 38 | 7 | `scripts/verify.mjs` (`npm run verify`) automates the SUBMISSION repo checks (secret pattern, forbidden files, images over 200 KB, tracked size ≤ 8 MB, initial JS ≤ 200 KB gzip) and replaces the inline bash in CI. | Cross-platform and runnable locally on Windows. |
+| 39 | 7 | `wrangler.toml` has no `[vars]` block; `GEMINI_MODEL` is set in the dashboard. DEPLOYMENT.md is updated to match. | With a wrangler.toml present, its vars override dashboard values, so an empty `GEMINI_MODEL` there would hide the real one. |
+| 40 | 7 | Upgraded zod 3 → 4 and react-router-dom 6 → 7. | CI's `npm audit --audit-level=high` failed on a high-severity zod advisory; react-router 6 had two moderate ones. Only the AI client's generic signature needed changing. |
+| 41 | 7 | The proxy test uses a fake key that does not match the Google key pattern. | The repo secret scan (and GitHub push protection) would otherwise flag it. |
+| 42 | 7 | Accessible names that differ from visible text now contain it ("Mark done: …", "Unaccept"). | Found by Playwright axe (`label-content-name-mismatch`), which the jsdom axe run does not catch. |
 
 ## Open issues
-None yet.
+1. **Live Gemini not exercised.** No API key was used during the build, so every AI path is tested against mocks and fixtures only. After the first deploy, run one intake and one "add 20 guests" change to confirm the live model accepts the `responseSchema` format in `prompts.ts`. Every failure path falls back gracefully (static questions, starter plan, quick forms, unranked options).
+2. **Default model name.** If `GEMINI_MODEL` is unset, the function uses `gemini-2.5-flash`, which may be outdated. Set `GEMINI_MODEL` to the current Flash model from Google AI Studio.
+3. **Origin allow-list is tied to the project name.** `PAGES_ORIGIN` in `functions/api/gemini.ts` matches `hostwise.pages.dev` and its previews. If the Pages project has another name, update it (same-origin requests always pass).
+4. **Rate limiting is per isolate.** The in-memory token bucket is best effort. Add the optional Cloudflare WAF rule from DEPLOYMENT.md §6 for a global limit.
+5. **Manual accessibility checks remain.** NVDA/VoiceOver announcements, 200% zoom and the Lighthouse ≥ 95 audit (the manual script in ACCESSIBILITY.md) can't be automated here. axe runs in jsdom and in Playwright on every tab, and 360 px has no horizontal scroll.
+6. **Colour contrast is only checked in Playwright.** jsdom has no canvas, so vitest-axe skips colour contrast; the e2e axe run covers it.

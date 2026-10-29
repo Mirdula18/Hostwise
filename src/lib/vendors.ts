@@ -3,7 +3,7 @@ import { makeId, type IdGen } from "./id";
 import { sum } from "./money";
 import { err, ok, type Result } from "./result";
 
-export type QuoteRow = {
+type QuoteRow = {
   vendorId: string;
   vendorName: string;
   vendorStatus: Vendor["status"];
