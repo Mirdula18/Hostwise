@@ -244,6 +244,13 @@ describe("todayTop3", () => {
     expect(todayTop3(tasks, TODAY, ["food"]).map((t) => t.id)).toEqual(["food", "decor"]);
   });
 
+  it("keeps the original order when every other key ties, and returns at most 3", () => {
+    const tasks = ["w", "x", "y", "z"].map((id) =>
+      task({ id, category: "Decor", dueDate: "2026-11-05" }),
+    );
+    expect(todayTop3(tasks, TODAY, ["food"]).map((t) => t.id)).toEqual(["w", "x", "y"]);
+  });
+
   it("skips done and blocked tasks and returns fewer than 3 when fewer remain", () => {
     const tasks = [
       task({ id: "a", status: "done" }),

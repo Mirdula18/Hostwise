@@ -3,6 +3,7 @@ import {
   fallbackQuestion,
   finalizeProfile,
   isIntakeField,
+  keepAnswers,
   normalizeQuestion,
   parseAnswer,
   rawFor,
@@ -213,5 +214,20 @@ describe("starterPlan", () => {
         (t) => t.dueOffsetDays === 0,
       ),
     ).toBe(true);
+  });
+});
+
+describe("keepAnswers", () => {
+  it("keeps only the listed fields", () => {
+    const answers = { occasion: "birthday" as const, guestCount: 40, city: "Pune" };
+    expect(keepAnswers(answers, ["occasion", "city"])).toEqual({
+      occasion: "birthday",
+      city: "Pune",
+    });
+  });
+
+  it("returns no answers for an empty field list or empty answers", () => {
+    expect(keepAnswers({ guestCount: 40 }, [])).toEqual({});
+    expect(keepAnswers({}, ["occasion"])).toEqual({});
   });
 });
