@@ -3,7 +3,7 @@
 ## 1. Strategy
 | Layer | Tool | Target |
 |---|---|---|
-| Pure logic (`src/lib`) | Vitest | ≥ 80% lines; all edge cases |
+| Pure logic (`src/lib`) and proxy (`functions/`) | Vitest | ≥ 90% lines, branches and functions; all edge cases |
 | AI client and proxy | Vitest with mocked `fetch` | All success and failure paths |
 | Components | Testing Library + vitest-axe | Behaviour plus zero axe violations |
 | End to end | Playwright (1 smoke spec) | Headline journey; AI routes intercepted |

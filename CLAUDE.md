@@ -23,7 +23,7 @@ This is a hackathon submission scored on: **Code Quality, Security, Efficiency, 
 | AI | Gemini REST API, called **only** from the Cloudflare Pages Function `functions/api/gemini.ts` |
 | Hosting | Cloudflare Pages (static `dist/`) plus Pages Functions |
 | Tests | Vitest, @testing-library/react, vitest-axe, Playwright (1 smoke spec) |
-| Lint | ESLint (typescript-eslint, react-hooks, jsx-a11y), Prettier |
+| Lint | ESLint (typescript-eslint, react-hooks, jsx-a11y, import-x, jsdoc), Prettier, knip |
 
 ## Commands
 ```bash
@@ -54,7 +54,7 @@ npm run check        # lint + typecheck + test + build  <- run before every comm
    - Components stay thin: they read from the store and call lib functions.
 5. **Tests**
    - Every function in `src/lib/` gets unit tests, covering edge cases: zero, negative, empty, and over-budget.
-   - Coverage target is ≥ 80% lines on `src/lib/`.
+   - Coverage gate is ≥ 90% lines, branches and functions on `src/lib/` and `functions/`.
 6. **Accessibility**
    - Semantic elements; every input has a `<label>`.
    - Visible focus rings; keyboard-only flow works.

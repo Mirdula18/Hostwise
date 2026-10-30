@@ -1,4 +1,4 @@
-import { LIMITS, TEXT } from "./constants";
+import { ISO_DATE, LIMITS, TEXT } from "./constants";
 import { parseMoney } from "./money";
 import { err, ok, type Result } from "./result";
 import { clip, optionalText } from "./text";
@@ -7,8 +7,6 @@ import type { QuoteInput, VendorInput } from "./vendors";
 import type { ActionableChange, VendorStatus } from "../schemas/event";
 
 /** Validation for the app's forms: raw strings in, typed input or a message out. */
-
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** A whole number in `[1, max]`, or null. */
 function wholeInRange(text: string, max: number): number | null {

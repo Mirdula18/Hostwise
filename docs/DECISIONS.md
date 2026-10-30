@@ -51,6 +51,12 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 45 | UI | The event header shows four stat tiles (countdown, guests, tasks done with a progress bar, money still available). | The host sees where things stand without opening a tab. |
 | 46 | UI | The budget split bar is `aria-hidden`; its legend lists every category with its percent. | Colour is never the only carrier of the information. |
 | 47 | UI | The header is sticky, with `scroll-padding-top` so focused elements are never hidden under it. | WCAG 2.4.11 Focus Not Obscured. |
+| 48 | QA | Production code (`src/`, `functions/`) is linted for complexity ≤ 10, function length ≤ 40 lines (React components ≤ 150), no magic numbers and import order; tests are exempt. | Small units are easier to review and test; a component is one function, so it gets a larger budget. |
+| 49 | QA | All limits live in `src/lib/constants.ts` and are shared by the browser schemas, the proxy schemas and form inputs. | A limit changed in one place can no longer drift between client and server. |
+| 50 | QA | Form validation moved from components into `src/lib/forms.ts` (pure, unit-tested); components only hold field state. | CLAUDE.md rule 4: thin components, logic in `src/lib`. |
+| 51 | QA | The proxy's `callGemini` and request parsing return `Result` like the rest of the lib, instead of a separate `{ ok, failure }` shape. | One error-handling pattern across the codebase. |
+| 52 | QA | `knip` runs in `npm run check`; `eslint-plugin-jsdoc` requires JSDoc on every export in `src/lib` and `functions/`. | Unused code and undocumented APIs fail the build instead of relying on review. |
+| 53 | QA | Coverage gates raised from 80% lines to 90% lines, branches and functions on `src/lib/**` and `functions/**`. | Measured coverage was already above 94%; the gate now protects it. |
 
 ## Open issues
 1. **Live Gemini not exercised.** No API key was used during the build, so every AI path is tested against mocks and fixtures only. After the first deploy, run one intake and one "add 20 guests" change to confirm the live model accepts the `responseSchema` format in `prompts.ts`. Every failure path falls back gracefully (static questions, starter plan, quick forms, unranked options).

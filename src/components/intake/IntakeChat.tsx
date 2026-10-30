@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AnswersList, type Step } from "./AnswersList";
+import { PlanFailed } from "./PlanFailed";
 import { ProgressBar } from "./ProgressBar";
 import { QuestionStep } from "./QuestionStep";
 import { AIError, callAI } from "../../lib/ai/client";
 import {
-  displayAnswer,
   fallbackQuestion,
   finalizeProfile,
   keepAnswers,
@@ -15,18 +16,15 @@ import {
   type IntakeQuestion,
   type Raw,
 } from "../../lib/intake";
-import { FIELD_SPECS, MAX_QUESTIONS, type IntakeAnswers } from "../../lib/intakeFallback";
+import { MAX_QUESTIONS, type IntakeAnswers } from "../../lib/intakeFallback";
 import { planToEvent } from "../../lib/plan";
 import { starterPlan } from "../../lib/starterPlan";
 import { todayIso } from "../../lib/timeline";
 import { AIPlan, NextQuestion } from "../../schemas/ai";
 import { useEventStore } from "../../store/useEventStore";
-import { AIErrorAlert } from "../ui/AIErrorAlert";
-import { Button } from "../ui/Button";
 import { LiveRegion } from "../ui/LiveRegion";
 import type { EventProfile } from "../../schemas/event";
 
-type Step = { question: IntakeQuestion };
 type Next = IntakeQuestion | { done: true };
 type AIOutcome = Next | null | "aborted" | "failed";
 
@@ -46,55 +44,7 @@ async function aiQuestion(
   }
 }
 
-type AnswersProps = { steps: Step[]; answers: IntakeAnswers; onChange: (index: number) => void };
-
-/** The answers so far, each with a Change button that reopens that question. */
-function AnswersList({ steps, answers, onChange }: AnswersProps) {
-  return (
-    <aside aria-labelledby="answers-heading" className="space-y-2">
-      <h2 id="answers-heading" className="text-lg font-bold">
-        Your answers
-      </h2>
-      <ol className="space-y-2">
-        {steps.map((s, i) => (
-          <li key={s.question.field} className="rounded-lg border border-line bg-surface p-2">
-            <p className="text-sm text-muted">{FIELD_SPECS[s.question.field].question}</p>
-            <p className="font-medium">{displayAnswer(s.question.field, answers)}</p>
-            <Button
-              variant="ghost"
-              className="-ml-2"
-              aria-label={`Change answer: ${FIELD_SPECS[s.question.field].question}`}
-              onClick={() => onChange(i)}
-            >
-              Change
-            </Button>
-          </li>
-        ))}
-      </ol>
-    </aside>
-  );
-}
 type Phase = "loading" | "asking" | "planning" | "planError";
-
-type PlanFailedProps = {
-  message: string | null;
-  profile: EventProfile;
-  onBuild: (profile: EventProfile, useStarter?: boolean) => Promise<void>;
-};
-
-/** Plan generation failed: retry the AI, or fall back to the starter plan. */
-function PlanFailed({ message, profile, onBuild }: PlanFailedProps) {
-  return (
-    <AIErrorAlert
-      message={`${message ?? ""} Your answers are kept.`}
-      onRetry={() => void onBuild(profile)}
-    >
-      <Button variant="secondary" onClick={() => void onBuild(profile, true)}>
-        Use a starter plan instead
-      </Button>
-    </AIErrorAlert>
-  );
-}
 
 /**
  * One question at a time. Gemini picks the next question; if it is unavailable or

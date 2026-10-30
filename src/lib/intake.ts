@@ -1,4 +1,4 @@
-import { LIMITS, TEXT } from "./constants";
+import { ISO_DATE, LIMITS, TEXT } from "./constants";
 import {
   CURRENCIES,
   FIELD_SPECS,
@@ -87,8 +87,6 @@ export type Raw = string | string[];
 type AnswerResult = Result<IntakeAnswers[IntakeField], string>;
 type AnswerInput = { text: string; list: readonly string[]; today: string };
 type AnswerParser = (input: AnswerInput) => AnswerResult;
-
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseDate({ text, today }: AnswerInput): AnswerResult {
   if (!ISO_DATE.test(text) || Number.isNaN(Date.parse(text))) return err("Enter a date.");

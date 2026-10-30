@@ -60,6 +60,9 @@ export const HTTP = {
 /** Timeline buckets, in days from today. */
 export const BUCKET_DAYS = { THIS_WEEK: 7, NEXT_TWO_WEEKS: 21 } as const;
 
+/** A `yyyy-MM-dd` date string (shape only; validity is checked separately). */
+export const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 /** Debounce for inputs that trigger an AI call (CLAUDE.md rule 7). */
 export const AI_DEBOUNCE_MS = 500;
 

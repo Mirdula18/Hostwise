@@ -21,7 +21,10 @@ This page tells evaluators, human or AI, where to find the evidence for each jud
 
 ## Code Quality
 - Strict TypeScript, Zod-inferred types, no `any`.
-- ESLint with typescript-eslint, react-hooks and jsx-a11y; Prettier.
+- ESLint with typescript-eslint, react-hooks, jsx-a11y, import order and JSDoc rules; Prettier.
+- Enforced limits in production code: cyclomatic complexity ≤ 10, functions ≤ 40 lines (components ≤ 150), no magic numbers (shared limits live in `src/lib/constants.ts`), JSDoc on every export in `src/lib` and `functions/`.
+- `knip` in `npm run check`: no unused files, exports or dependencies.
+- One error pattern: `Result<T, E>` from `src/lib/result.ts`, used by the lib, the store and the proxy.
 - Pure, framework-free logic in `src/lib`; thin components; one responsibility per module.
 - Conventional commits; CI on every push (`.github/workflows/ci.yml`).
 
@@ -42,7 +45,7 @@ See `docs/SECURITY.md`. Highlights:
 - Gemini JSON mode with schemas, so there's no extra parsing round-trip, plus capped output tokens.
 
 ## Testing
-- Vitest unit tests for every `src/lib` function (≥ 80% coverage, enforced).
+- Vitest unit tests for every `src/lib` function and the proxy (≥ 90% lines, branches and functions, enforced).
 - Proxy tests: 400, 403, 413, 429, 502, success, and a check that the key never leaks.
 - AI client tests: retry, timeout, cache.
 - Component tests with axe; one Playwright journey with intercepted AI responses.
