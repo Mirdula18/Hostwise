@@ -191,6 +191,7 @@ export function userData(input: unknown): string {
   return `<user_data>\n${json}\n</user_data>`;
 }
 
+/** System prompt (preamble plus task instruction) and the escaped `<user_data>` block. */
 export function buildPrompt(task: TaskName, input: unknown): { system: string; user: string } {
   return {
     system: `${PREAMBLE}\n\nTask:\n${TEMPLATES[task].instruction}`,

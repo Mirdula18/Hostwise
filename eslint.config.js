@@ -4,6 +4,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
 import importX from "eslint-plugin-import-x";
+import jsdoc from "eslint-plugin-jsdoc";
 
 export default tseslint.config(
   {
@@ -105,6 +106,26 @@ export default tseslint.config(
     files: ["src/**/*.tsx"],
     rules: {
       "max-lines-per-function": ["error", { max: 150, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    // Every exported function, class and type in the pure core is documented.
+    files: ["src/lib/**/*.ts", "functions/**/*.ts"],
+    plugins: { jsdoc },
+    rules: {
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: true,
+            FunctionExpression: true,
+          },
+          contexts: ["TSTypeAliasDeclaration", "TSInterfaceDeclaration"],
+        },
+      ],
     },
   },
 );

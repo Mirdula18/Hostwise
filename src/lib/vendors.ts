@@ -54,6 +54,7 @@ export function syncCommitted(
   });
 }
 
+/** Why a quote could not be accepted. */
 export type VendorError = "vendor_not_found" | "quote_not_found" | "no_budget_category";
 
 /** Accepts one quote: other quotes from that vendor are unaccepted and the vendor is booked. */
@@ -94,9 +95,11 @@ export function unacceptQuote(event: Event, vendorId: string, quoteId: string): 
   return { ...event, vendors, budget: syncCommitted(event.budget, vendors) };
 }
 
+/** Fields the host can set when adding a vendor. */
 export type VendorInput = Pick<Vendor, "name" | "category" | "status"> &
   Partial<Pick<Vendor, "contact" | "notes">>;
 
+/** Adds a vendor with no quotes yet. */
 export function addVendor(
   vendors: readonly Vendor[],
   input: VendorInput,
@@ -105,6 +108,7 @@ export function addVendor(
   return [...vendors, { id: idGen("vendor"), quotes: [], ...input }];
 }
 
+/** Updates a vendor's details; quotes are changed through their own functions. */
 export function updateVendor(
   vendors: readonly Vendor[],
   id: string,
@@ -113,6 +117,7 @@ export function updateVendor(
   return vendors.map((v) => (v.id === id ? { ...v, ...patch } : v));
 }
 
+/** Removes a vendor, unlinks its tasks and recalculates committed amounts. */
 export function removeVendor(event: Event, id: string): Event {
   const vendors = event.vendors.filter((v) => v.id !== id);
   return {
@@ -123,6 +128,7 @@ export function removeVendor(event: Event, id: string): Event {
   };
 }
 
+/** A quote as the host enters it; ids and acceptance are set by code. */
 export type QuoteInput = Omit<Quote, "id" | "accepted">;
 
 /** Adds a user-entered quote; a vendor still "considering"/"contacted" moves to "quoted". */

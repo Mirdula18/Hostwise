@@ -3,6 +3,7 @@ import { HTTP, SECOND_MS } from "../../../src/lib/constants";
 import { err, ok, type Result } from "../../../src/lib/result";
 import type { TaskName } from "./schemas";
 
+/** Pages Function bindings: the secret key and the optional model override. */
 export type GeminiEnv = { GEMINI_API_KEY?: string; GEMINI_MODEL?: string };
 
 /** Used only when GEMINI_MODEL is not set; override it in the Pages dashboard. */

@@ -16,6 +16,7 @@ function wholeInRange(text: string, max: number): number | null {
   return Number.isInteger(n) && n >= 1 && n <= max ? n : null;
 }
 
+/** Raw vendor form values, as typed. */
 export type VendorFields = {
   name: string;
   category: string;
@@ -59,6 +60,7 @@ export function quoteInput(f: QuoteFields): Result<QuoteInput, string> {
   });
 }
 
+/** Raw task form values, as typed. */
 export type TaskFields = { title: string; category: string; dueDate: string; dependsOn: string[] };
 
 /** Task form: a title within the limit and a due date. */
@@ -75,6 +77,7 @@ export function taskInput(f: TaskFields): Result<TaskInput, string> {
   });
 }
 
+/** The four quick-change forms on the change page. */
 export type QuickChangeKind = ActionableChange["kind"];
 
 /** The typed quick forms on the change page; they work without the AI. */

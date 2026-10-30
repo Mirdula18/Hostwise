@@ -98,6 +98,7 @@ export const TaskInputs = {
     .strict(),
 } as const;
 
+/** The AI tasks the proxy accepts; there is no free-form prompt task. */
 export type TaskName = keyof typeof TaskInputs;
 export const TASK_NAMES = Object.keys(TaskInputs) as TaskName[];
 

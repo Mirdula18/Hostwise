@@ -11,14 +11,17 @@ export function shiftDate(iso: string, days: number): string {
   return format(addDays(parseISO(iso), days), "yyyy-MM-dd");
 }
 
+/** Calendar days from `fromIso` to `toIso`; negative when `toIso` is earlier. */
 export function daysBetween(fromIso: string, toIso: string): number {
   return differenceInCalendarDays(parseISO(toIso), parseISO(fromIso));
 }
 
+/** Today as a local `yyyy-MM-dd` date. */
 export function todayIso(now: Date = new Date()): string {
   return format(now, "yyyy-MM-dd");
 }
 
+/** True when `iso` is strictly after `today`. */
 export function isFutureDate(iso: string, today: string): boolean {
   return daysBetween(today, iso) > 0;
 }
@@ -64,6 +67,7 @@ export function detectCycle(tasks: readonly Pick<Task, "id" | "dependsOn">[]): s
   return null;
 }
 
+/** Thrown by `topoSort` when tasks depend on each other in a loop. */
 export class CycleError extends Error {
   constructor(public readonly cycle: string[]) {
     super(`Circular dependency: ${cycle.join(" → ")}`);
@@ -190,6 +194,7 @@ export function toDates(
   return { tasks, notes: breakCycles(tasks) };
 }
 
+/** True while any of the task's dependencies is not done. */
 export function isBlocked(task: Task, tasks: readonly Task[]): boolean {
   return blockers(task, tasks).length > 0;
 }
@@ -199,10 +204,12 @@ export function blockers(task: Task, tasks: readonly Task[]): Task[] {
   return tasks.filter((t) => task.dependsOn.includes(t.id) && t.status !== "done");
 }
 
+/** An open task due after the event date. */
 export function isAtRisk(task: Task, eventDate: string): boolean {
   return task.status !== "done" && task.dueDate > eventDate;
 }
 
+/** An open task whose due date has passed. */
 export function isOverdue(task: Task, today: string): boolean {
   return task.status !== "done" && task.dueDate < today;
 }
@@ -246,6 +253,7 @@ export function shiftAll(tasks: readonly Task[], days: number): Task[] {
   );
 }
 
+/** Tasks grouped for the timeline view. */
 export type Buckets = {
   overdue: Task[];
   thisWeek: Task[];
@@ -304,9 +312,11 @@ export function todayTop3(
     .map((x) => x.t);
 }
 
+/** Fields the host can set when adding or editing a task. */
 export type TaskInput = Pick<Task, "title" | "category" | "dueDate" | "dependsOn"> &
   Partial<Pick<Task, "status" | "vendorId">>;
 
+/** Why a task edit was refused. */
 export type TaskEditError =
   | { kind: "not_found" }
   | { kind: "unknown_dependency"; id: string }
@@ -326,6 +336,7 @@ function validateGraph(tasks: Task[]): Result<Task[], TaskEditError> {
   return ok(tasks);
 }
 
+/** Adds a custom task; refused if it names an unknown dependency or creates a cycle. */
 export function addTask(
   tasks: readonly Task[],
   input: TaskInput,
@@ -341,6 +352,7 @@ export function addTask(
   return validateGraph([...tasks, task]);
 }
 
+/** Edits a task; refused if the task is unknown or the change creates a cycle. */
 export function updateTask(
   tasks: readonly Task[],
   id: string,

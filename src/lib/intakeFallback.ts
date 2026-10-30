@@ -2,7 +2,9 @@ import { PRIORITY_LABELS } from "./priorities";
 import type { InputType, NextQuestion } from "../schemas/ai";
 import type { EventProfile, Occasion } from "../schemas/event";
 
+/** A profile field the intake can ask about. */
 export type IntakeField = keyof EventProfile;
+/** Answers collected so far; any field may still be missing. */
 export type IntakeAnswers = Partial<EventProfile>;
 type Choice = { value: string; label: string };
 
@@ -130,6 +132,7 @@ const OPTIONAL_BY_OCCASION: Record<Occasion, IntakeField[]> = {
 
 export const MAX_QUESTIONS = 10;
 
+/** The static question for `field`, used when the AI is unavailable. */
 export function questionFor(field: IntakeField): NextQuestion {
   const spec = FIELD_SPECS[field];
   return {

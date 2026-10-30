@@ -307,6 +307,7 @@ export function describeChange(event: Event, request: ActionableChange): string 
   }
 }
 
+/** Why an option could not be applied; the event is left unchanged. */
 export type ApplyError =
   "unknown_category" | "locked_category" | "below_committed" | "unbalanced" | "unknown_task";
 

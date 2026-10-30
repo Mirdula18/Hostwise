@@ -81,6 +81,7 @@ const TEXT_LIMITS: Partial<Record<IntakeField, number>> = {
   city: TEXT.NAME,
 };
 
+/** An answer as the form holds it: text, or a list for multi-select and rank. */
 export type Raw = string | string[];
 
 type AnswerResult = Result<IntakeAnswers[IntakeField], string>;

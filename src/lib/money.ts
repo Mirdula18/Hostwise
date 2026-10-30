@@ -3,11 +3,13 @@ import { LIMITS } from "./constants";
 /** All money is stored as integers in minor units (paise, cents). */
 const MINOR_PER_MAJOR = 100;
 
+/** Major units (e.g. rupees) to integer minor units (paise), rounded. */
 export function toMinor(major: number): number {
   if (!Number.isFinite(major)) throw new RangeError("Amount must be a finite number");
   return Math.round(major * MINOR_PER_MAJOR);
 }
 
+/** Integer minor units back to major units, for display and form values. */
 export function fromMinor(minor: number): number {
   return minor / MINOR_PER_MAJOR;
 }
@@ -76,6 +78,7 @@ export function allocate(total: number, weights: readonly number[]): number[] {
   return parts;
 }
 
+/** Sum of integer amounts; 0 for an empty list. */
 export function sum(values: readonly number[]): number {
   return values.reduce((a, b) => a + b, 0);
 }

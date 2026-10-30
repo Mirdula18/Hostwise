@@ -11,6 +11,7 @@ import type {
   TradeOffOption,
 } from "../schemas/event";
 
+/** A trade-off option with its display rank and the AI's explanation, if any. */
 export type RankedOption = TradeOffOption & {
   rank: number;
   why?: string;
@@ -100,6 +101,7 @@ export function checkChange(
 
 type DiffLine = { category: string; before: number; after: number; delta: number };
 type DiffTask = { id: string; title: string; before: string; after: string };
+/** Before/after values for everything a change can touch. */
 export type EventDiff = {
   lines: DiffLine[];
   total: { before: number; after: number };

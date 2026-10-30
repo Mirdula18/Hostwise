@@ -105,6 +105,7 @@ function applyDeltas(
   });
 }
 
+/** Why an edit to one budget line could not be balanced against the others. */
 export type RebalanceError =
   | { kind: "not_found" }
   | { kind: "negative" }
@@ -209,6 +210,7 @@ type LineStatus = {
   percentUsed: number;
 };
 
+/** Used, remaining and over-budget figures for one budget line. */
 export function lineStatus(line: BudgetLine): LineStatus {
   const used = usedAmount(line);
   const remaining = line.allocated - used;
@@ -229,6 +231,7 @@ type BudgetSummary = {
   overLineIds: string[];
 };
 
+/** Totals across all lines, plus which lines (if any) are over budget. */
 export function summary(lines: readonly BudgetLine[], total: number): BudgetSummary {
   const allocated = sum(lines.map((l) => l.allocated));
   const committed = sum(lines.map((l) => l.committed));
@@ -247,10 +250,12 @@ export function summary(lines: readonly BudgetLine[], total: number): BudgetSumm
   };
 }
 
+/** Locks or unlocks a line; locked lines are never touched by rebalancing or trade-offs. */
 export function toggleLock(lines: readonly BudgetLine[], id: string): BudgetLine[] {
   return lines.map((l) => (l.id === id ? { ...l, locked: !l.locked } : l));
 }
 
+/** Records what has actually been spent on a line; must be a whole, non-negative amount. */
 export function setSpent(
   lines: readonly BudgetLine[],
   id: string,
