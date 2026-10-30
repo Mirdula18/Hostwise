@@ -16,7 +16,7 @@ export function countdown(iso: string, today: string): string {
   return days > 0 ? `${days} days to go` : `${-days} days ago`;
 }
 
-export type Progress = { done: number; total: number; percent: number };
+type Progress = { done: number; total: number; percent: number };
 
 /** Share of tasks marked done, rounded down so 100% means everything is done. */
 export function taskProgress(tasks: readonly Pick<Task, "status">[]): Progress {
