@@ -3,6 +3,7 @@ import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
+import importX from "eslint-plugin-import-x";
 
 export default tseslint.config(
   {
@@ -68,6 +69,42 @@ export default tseslint.config(
           message: "AI output must render as text only.",
         },
       ],
+    },
+  },
+  {
+    // Production code only: small, simple functions with named constants.
+    files: ["src/**/*.{ts,tsx}", "functions/**/*.ts"],
+    plugins: { "import-x": importX },
+    rules: {
+      complexity: ["error", 10],
+      "max-lines-per-function": ["error", { max: 40, skipBlankLines: true, skipComments: true }],
+      "@typescript-eslint/no-magic-numbers": [
+        "error",
+        {
+          ignore: [0, 1, -1, 100],
+          ignoreArrayIndexes: true,
+          ignoreDefaultValues: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+          enforceConst: true,
+        },
+      ],
+      "import-x/order": [
+        "error",
+        {
+          groups: ["builtin", "external", "internal", ["parent", "sibling", "index"], "type"],
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
+      ],
+    },
+  },
+  {
+    // A React component is one function; 150 lines is the component budget.
+    files: ["src/**/*.tsx"],
+    rules: {
+      "max-lines-per-function": ["error", { max: 150, skipBlankLines: true, skipComments: true }],
     },
   },
 );
