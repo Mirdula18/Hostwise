@@ -1,11 +1,15 @@
 import { callGemini, type GeminiEnv } from "./_lib/gemini";
 import { RateLimiter } from "./_lib/rateLimit";
-import { RequestEnvelope, TaskInputs } from "./_lib/schemas";
+import { RequestEnvelope, TaskInputs, type TaskName } from "./_lib/schemas";
+import { HTTP, KIB } from "../../src/lib/constants";
+import { err, ok, type Result } from "../../src/lib/result";
 
 /** Minimal Pages Function context; avoids pulling Workers globals into the app's types. */
 type Context = { request: Request; env: GeminiEnv };
 
-export const MAX_BODY_BYTES = 16 * 1024;
+const MAX_BODY_KIB = 16;
+export const MAX_BODY_BYTES = MAX_BODY_KIB * KIB;
+const RETRY_AFTER_SECONDS = "60";
 
 const LOCAL_ORIGINS = new Set([
   "http://localhost:5173",
@@ -17,6 +21,7 @@ const LOCAL_ORIGINS = new Set([
 /** Production and preview deployments of this Pages project. */
 const PAGES_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?hostwise\.pages\.dev$/;
 
+/** True for same-origin, this Pages project (and previews) and local dev servers. */
 export function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
   if (!origin) return false;
   if (origin === new URL(requestUrl).origin) return true;
@@ -53,39 +58,60 @@ function fail(code: ErrorCode, status: number, extra?: Record<string, string>): 
 
 type HandlerDeps = { fetchImpl?: typeof fetch; limiter?: RateLimiter; now?: () => number };
 
+/** Cheap checks before the body is read: method, origin, declared size and rate limit. */
+function precheck(request: Request, limiter: RateLimiter, at: number): Response | null {
+  if (request.method !== "POST") {
+    return fail("method_not_allowed", HTTP.METHOD_NOT_ALLOWED, { allow: "POST" });
+  }
+  if (!isAllowedOrigin(request.headers.get("origin"), request.url)) {
+    return fail("forbidden_origin", HTTP.FORBIDDEN);
+  }
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (declared > MAX_BODY_BYTES) return fail("too_large", HTTP.TOO_LARGE);
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+  if (!limiter.take(ip, at)) {
+    return fail("rate_limited", HTTP.RATE_LIMITED, { "retry-after": RETRY_AFTER_SECONDS });
+  }
+  return null;
+}
+
+function parseJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+type TaskCall = { task: TaskName; input: unknown };
+
+/** Reads the body and validates it against the envelope and the task's strict schema. */
+async function readTaskCall(request: Request): Promise<Result<TaskCall, Response>> {
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) {
+    return err(fail("too_large", HTTP.TOO_LARGE));
+  }
+  const envelope = RequestEnvelope.safeParse(parseJson(raw));
+  if (!envelope.success) return err(fail("bad_request", HTTP.BAD_REQUEST));
+  const input = TaskInputs[envelope.data.task].safeParse(envelope.data.input);
+  if (!input.success) return err(fail("bad_request", HTTP.BAD_REQUEST));
+  return ok({ task: envelope.data.task, input: input.data });
+}
+
+/** Builds the Pages Function; dependencies are injectable for tests. */
 export function createHandler({
   fetchImpl = (...args) => fetch(...args),
   limiter = new RateLimiter(),
   now = Date.now,
 }: HandlerDeps = {}) {
   return async ({ request, env }: Context): Promise<Response> => {
-    if (request.method !== "POST") return fail("method_not_allowed", 405, { allow: "POST" });
-    if (!isAllowedOrigin(request.headers.get("origin"), request.url)) {
-      return fail("forbidden_origin", 403);
-    }
-    const declared = Number(request.headers.get("content-length") ?? "0");
-    if (declared > MAX_BODY_BYTES) return fail("too_large", 413);
-
-    const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
-    if (!limiter.take(ip, now())) return fail("rate_limited", 429, { "retry-after": "60" });
-
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) return fail("too_large", 413);
-
-    let body: unknown;
-    try {
-      body = JSON.parse(raw);
-    } catch {
-      return fail("bad_request", 400);
-    }
-    const envelope = RequestEnvelope.safeParse(body);
-    if (!envelope.success) return fail("bad_request", 400);
-    const input = TaskInputs[envelope.data.task].safeParse(envelope.data.input);
-    if (!input.success) return fail("bad_request", 400);
-
-    const result = await callGemini(env, envelope.data.task, input.data, fetchImpl);
-    if (!result.ok) return fail(result.failure.code, result.failure.status);
-    return json({ data: result.data }, 200);
+    const rejected = precheck(request, limiter, now());
+    if (rejected) return rejected;
+    const call = await readTaskCall(request);
+    if (!call.ok) return call.error;
+    const result = await callGemini(env, call.value.task, call.value.input, fetchImpl);
+    if (!result.ok) return fail(result.error.code, result.error.status);
+    return json({ data: result.value }, HTTP.OK);
   };
 }
 

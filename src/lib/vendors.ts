@@ -1,7 +1,7 @@
-import type { BudgetLine, Event, Quote, Vendor } from "../schemas/event";
 import { makeId, type IdGen } from "./id";
 import { sum } from "./money";
 import { err, ok, type Result } from "./result";
+import type { BudgetLine, Event, Quote, Vendor } from "../schemas/event";
 
 type QuoteRow = {
   vendorId: string;

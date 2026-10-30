@@ -1,11 +1,3 @@
-import type {
-  ActionableChange,
-  Adjustment,
-  BudgetLine,
-  Event,
-  Impact,
-  TradeOffOption,
-} from "../schemas/event";
 import {
   giveByPriority,
   headroom,
@@ -14,10 +6,23 @@ import {
   trimOrder,
   usedAmount,
 } from "./budget";
+import { LIMITS } from "./constants";
 import { allocate, format, sum } from "./money";
 import { PRIORITY_LABELS } from "./priorities";
 import { err, ok, type Result } from "./result";
 import { daysBetween, shiftAll, shiftWithDependents, transitiveDependents } from "./timeline";
+import type {
+  ActionableChange,
+  Adjustment,
+  BudgetLine,
+  Event,
+  Impact,
+  Task,
+  TradeOffOption,
+} from "../schemas/event";
+
+/** The guest-fit option invites half of the extra guests. */
+const HALF = 2;
 
 const GUEST_TASK = /head ?count|guest|rsvp|invit|cater|seat|favou?r/i;
 
@@ -90,8 +95,9 @@ function respectsTop(event: Event, adjustments: readonly Adjustment[]): boolean 
 function names(lines: readonly BudgetLine[], adjustments: readonly Adjustment[]): string {
   const cats = adjustments.map((a) => a.category);
   const list = lines.filter((l) => cats.includes(l.category)).map((l) => l.category);
-  if (list.length <= 2) return list.join(" and ");
-  return `${list.slice(0, 2).join(", ")} and ${list.length - 2} more`;
+  const shown = LIMITS.SUMMARY_ITEMS;
+  if (list.length <= shown) return list.join(" and ");
+  return `${list.slice(0, shown).join(", ")} and ${list.length - shown} more`;
 }
 
 function sameAdjustments(a: readonly Adjustment[], b: readonly Adjustment[]): boolean {
@@ -122,121 +128,142 @@ function fitGuests(
   return deltas ? { lines, deltas } : null;
 }
 
-/**
- * Candidate trade-offs that each fully resolve the gap. Code writes the numbers;
- * the AI may only rank and explain them. Locked lines are never adjusted and the
- * top priority is only cut when nothing else fits (then respectsTopPriority=false).
- */
-export function generateOptions(event: Event, impact: Impact): TradeOffOption[] {
-  const request = impact.request;
-  if (request.kind === "unclear") return [];
-  const { currency, priorities } = event.profile;
-  const top = priorities[0];
-  const topLabel = top ? PRIORITY_LABELS[top] : "your top priority";
+/** Shared inputs for building options; `lines` is the post-change baseline. */
+type OptionContext = {
+  event: Event;
+  request: ActionableChange;
+  lines: BudgetLine[];
+  unlocked: BudgetLine[];
+  nonTop: BudgetLine[];
+  topLabel: string;
+};
+
+function optionContext(event: Event, request: ActionableChange): OptionContext {
+  const top = event.profile.priorities[0];
   const lines = baseLines(event, request);
   const unlocked = lines.filter((l) => !l.locked);
-  const nonTop = unlocked.filter((l) => l.priorityTag !== top);
-  const options: TradeOffOption[] = [];
+  return {
+    event,
+    request,
+    lines,
+    unlocked,
+    nonTop: unlocked.filter((l) => l.priorityTag !== top),
+    topLabel: top ? PRIORITY_LABELS[top] : "your top priority",
+  };
+}
 
-  if (impact.gap === 0) {
-    return [{ id: "as-is", label: "Apply the change", adjustments: [], respectsTopPriority: true }];
+const pushUnique = (options: TradeOffOption[], option: TradeOffOption): void => {
+  if (!options.some((o) => sameAdjustments(o.adjustments, option.adjustments))) {
+    options.push(option);
   }
+};
 
-  if (impact.gap < 0) {
-    const shortfall = -impact.gap;
-
-    const protect = takeInOrder(trimOrder(nonTop, priorities), shortfall);
-    if (protect) {
-      const adjustments = toAdjustments(lines, protect);
-      options.push({
-        id: "protect",
-        label: `Protect ${topLabel}; trim ${names(lines, adjustments)}`,
-        adjustments,
-        respectsTopPriority: true,
-      });
-    } else {
-      const all = takeInOrder(trimOrder(unlocked, priorities), shortfall);
-      if (all) {
-        options.push({
-          id: "trim-all",
-          label: `Trim every flexible category, including ${topLabel} (nothing else covers it)`,
-          adjustments: toAdjustments(lines, all),
-          respectsTopPriority: false,
-        });
-      }
-    }
-
-    const room = nonTop.map(headroom);
-    if (sum(room) >= shortfall) {
-      const parts = allocate(shortfall, room);
-      const deltas = new Map(nonTop.map((l, i) => [l.id, -(parts[i] ?? 0)]));
-      const adjustments = toAdjustments(lines, deltas);
-      if (!options.some((o) => sameAdjustments(o.adjustments, adjustments))) {
-        options.push({
-          id: "spread",
-          label: `Protect ${topLabel}; trim all other flexible categories a little`,
-          adjustments,
-          respectsTopPriority: true,
-        });
-      }
-    }
-
-    const old = event.profile.guestCount;
-    if (request.kind === "guests" && request.newCount > old) {
-      const half = old + Math.floor((request.newCount - old) / 2);
-      const halfFit = half > old ? fitGuests(event, half) : null;
-      const count = halfFit ? half : old;
-      const fit = halfFit ?? fitGuests(event, old);
-      if (fit) {
-        const adjustments = toAdjustments(fit.lines, fit.deltas);
-        const trimmed = adjustments.filter((a) => a.delta < 0);
-        options.push({
-          id: "trim-guests",
-          label:
-            count === old
-              ? `Keep the guest list at ${old}`
-              : `Invite ${count - old} more guests instead of ${request.newCount - old}` +
-                (trimmed.length > 0 ? `; trim ${names(fit.lines, trimmed)}` : ""),
-          adjustments,
-          guestCountChange: count - request.newCount,
-          respectsTopPriority: true,
-        });
-      }
-    }
-
-    options.push({
-      id: "raise-budget",
-      label: `Raise the budget by ${format(shortfall, currency)}`,
-      adjustments: [],
-      budgetChange: shortfall,
+/** Trim the least important lines first; falls back to every unlocked line. */
+function protectOption(ctx: OptionContext, shortfall: number): TradeOffOption | null {
+  const { priorities } = ctx.event.profile;
+  const protect = takeInOrder(trimOrder(ctx.nonTop, priorities), shortfall);
+  if (protect) {
+    const adjustments = toAdjustments(ctx.lines, protect);
+    return {
+      id: "protect",
+      label: `Protect ${ctx.topLabel}; trim ${names(ctx.lines, adjustments)}`,
+      adjustments,
       respectsTopPriority: true,
-    });
-    return options;
+    };
   }
+  const all = takeInOrder(trimOrder(ctx.unlocked, priorities), shortfall);
+  if (!all) return null;
+  return {
+    id: "trim-all",
+    label: `Trim every flexible category, including ${ctx.topLabel} (nothing else covers it)`,
+    adjustments: toAdjustments(ctx.lines, all),
+    respectsTopPriority: false,
+  };
+}
 
-  const surplus = impact.gap;
-  if (unlocked.length > 0) {
+/** Share the cut across every non-top line in proportion to its headroom. */
+function spreadOption(ctx: OptionContext, shortfall: number): TradeOffOption | null {
+  const room = ctx.nonTop.map(headroom);
+  if (sum(room) < shortfall) return null;
+  const parts = allocate(shortfall, room);
+  const deltas = new Map(ctx.nonTop.map((l, i) => [l.id, -(parts[i] ?? 0)]));
+  return {
+    id: "spread",
+    label: `Protect ${ctx.topLabel}; trim all other flexible categories a little`,
+    adjustments: toAdjustments(ctx.lines, deltas),
+    respectsTopPriority: true,
+  };
+}
+
+/** Invite half of the extra guests (or none) and balance without the top priority. */
+function guestFitOption(event: Event, newCount: number): TradeOffOption | null {
+  const old = event.profile.guestCount;
+  const half = old + Math.floor((newCount - old) / HALF);
+  const halfFit = half > old ? fitGuests(event, half) : null;
+  const count = halfFit ? half : old;
+  const fit = halfFit ?? fitGuests(event, old);
+  if (!fit) return null;
+  const adjustments = toAdjustments(fit.lines, fit.deltas);
+  const trimmed = adjustments.filter((a) => a.delta < 0);
+  const trimNote = trimmed.length > 0 ? `; trim ${names(fit.lines, trimmed)}` : "";
+  return {
+    id: "trim-guests",
+    label:
+      count === old
+        ? `Keep the guest list at ${old}`
+        : `Invite ${count - old} more guests instead of ${newCount - old}${trimNote}`,
+    adjustments,
+    guestCountChange: count - newCount,
+    respectsTopPriority: true,
+  };
+}
+
+function shortfallOptions(ctx: OptionContext, shortfall: number): TradeOffOption[] {
+  const options: TradeOffOption[] = [];
+  const protect = protectOption(ctx, shortfall);
+  if (protect) options.push(protect);
+  const spread = spreadOption(ctx, shortfall);
+  if (spread) pushUnique(options, spread);
+  const { request, event } = ctx;
+  if (request.kind === "guests" && request.newCount > event.profile.guestCount) {
+    const fit = guestFitOption(event, request.newCount);
+    if (fit) options.push(fit);
+  }
+  options.push({
+    id: "raise-budget",
+    label: `Raise the budget by ${format(shortfall, event.profile.currency)}`,
+    adjustments: [],
+    budgetChange: shortfall,
+    respectsTopPriority: true,
+  });
+  return options;
+}
+
+function surplusOptions(ctx: OptionContext, surplus: number): TradeOffOption[] {
+  const { priorities, currency } = ctx.event.profile;
+  const options: TradeOffOption[] = [];
+  if (ctx.unlocked.length > 0) {
     options.push({
       id: "boost-priorities",
       label: `Put more into ${priorities.map((p) => PRIORITY_LABELS[p]).join(", ")}`,
-      adjustments: toAdjustments(lines, giveByPriority(unlocked, surplus, priorities)),
+      adjustments: toAdjustments(ctx.lines, giveByPriority(ctx.unlocked, surplus, priorities)),
       respectsTopPriority: true,
     });
     const parts = allocate(
       surplus,
-      unlocked.map((l) => l.allocated),
+      ctx.unlocked.map((l) => l.allocated),
     );
-    const evenly = toAdjustments(lines, new Map(unlocked.map((l, i) => [l.id, parts[i] ?? 0])));
-    if (!options.some((o) => sameAdjustments(o.adjustments, evenly))) {
-      options.push({
-        id: "spread-extra",
-        label: "Spread the extra across every unlocked category",
-        adjustments: evenly,
-        respectsTopPriority: true,
-      });
-    }
+    pushUnique(options, {
+      id: "spread-extra",
+      label: "Spread the extra across every unlocked category",
+      adjustments: toAdjustments(
+        ctx.lines,
+        new Map(ctx.unlocked.map((l, i) => [l.id, parts[i] ?? 0])),
+      ),
+      respectsTopPriority: true,
+    });
   }
-  if (request.kind === "guests") {
+  if (ctx.request.kind === "guests") {
     options.push({
       id: "lower-budget",
       label: `Lower the budget by ${format(surplus, currency)} and keep the savings`,
@@ -248,6 +275,22 @@ export function generateOptions(event: Event, impact: Impact): TradeOffOption[] 
   return options;
 }
 
+/**
+ * Candidate trade-offs that each fully resolve the gap. Code writes the numbers;
+ * the AI may only rank and explain them. Locked lines are never adjusted and the
+ * top priority is only cut when nothing else fits (then respectsTopPriority=false).
+ */
+export function generateOptions(event: Event, impact: Impact): TradeOffOption[] {
+  const request = impact.request;
+  if (request.kind === "unclear") return [];
+  if (impact.gap === 0) {
+    return [{ id: "as-is", label: "Apply the change", adjustments: [], respectsTopPriority: true }];
+  }
+  const ctx = optionContext(event, request);
+  return impact.gap < 0 ? shortfallOptions(ctx, -impact.gap) : surplusOptions(ctx, impact.gap);
+}
+
+/** One-line summary of a change for the change log. */
 export function describeChange(event: Event, request: ActionableChange): string {
   const { profile } = event;
   switch (request.kind) {
@@ -267,6 +310,67 @@ export function describeChange(event: Event, request: ActionableChange): string 
 export type ApplyError =
   "unknown_category" | "locked_category" | "below_committed" | "unbalanced" | "unknown_task";
 
+type Applied = { profile: Event["profile"]; tasks: Task[]; lines: BudgetLine[] };
+
+/** Applies the non-budget part of a change: guest scaling, date or delay shifts. */
+function applyRequest(
+  event: Event,
+  request: ActionableChange,
+  option: TradeOffOption,
+): Result<Applied, ApplyError> {
+  const base: Applied = { profile: { ...event.profile }, tasks: event.tasks, lines: event.budget };
+  switch (request.kind) {
+    case "guests": {
+      const count = request.newCount + (option.guestCountChange ?? 0);
+      return ok({
+        ...base,
+        lines: scaleForGuests(event.budget, event.profile.guestCount, count),
+        profile: { ...base.profile, guestCount: count },
+      });
+    }
+    case "date":
+      return ok({
+        ...base,
+        tasks: shiftAll(event.tasks, daysBetween(event.profile.date, request.newDate)),
+        profile: { ...base.profile, date: request.newDate },
+      });
+    case "delay": {
+      const shifted = shiftWithDependents(
+        event.tasks,
+        request.taskId,
+        request.days,
+        event.profile.date,
+      );
+      return shifted.ok ? ok({ ...base, tasks: shifted.value.tasks }) : err("unknown_task");
+    }
+    case "budget":
+      return ok(base);
+  }
+}
+
+/** Applies category deltas, rejecting unknown or locked categories and cuts below what is used. */
+function applyAdjustments(
+  lines: readonly BudgetLine[],
+  adjustments: readonly Adjustment[],
+  total: number,
+): Result<BudgetLine[], ApplyError> {
+  const byCategory = new Map(lines.map((l) => [l.category, l]));
+  const deltas = new Map<string, number>();
+  for (const a of adjustments) {
+    const line = byCategory.get(a.category);
+    if (!line) return err("unknown_category");
+    if (line.locked && a.delta !== 0) return err("locked_category");
+    deltas.set(line.id, (deltas.get(line.id) ?? 0) + a.delta);
+  }
+  const next = lines.map((l) => {
+    const d = deltas.get(l.id);
+    return d ? { ...l, allocated: l.allocated + d } : l;
+  });
+  if (next.some((l) => l.allocated < usedAmount(l))) return err("below_committed");
+  if (sum(next.map((l) => l.allocated)) !== total) return err("unbalanced");
+  return ok(next);
+}
+
 /**
  * Applies a chosen option and returns a new event (the input is not mutated).
  * Every result is re-checked: no locked line moved, no line below what is committed,
@@ -280,52 +384,16 @@ export function applyOption(
 ): Result<Event, ApplyError> {
   const request = impact.request;
   if (request.kind === "unclear") return err("unbalanced");
-  let profile = { ...event.profile };
-  let tasks = event.tasks;
-  let lines: BudgetLine[] = event.budget;
   const total = totalAfter(event, request) + (option.budgetChange ?? 0);
-
-  switch (request.kind) {
-    case "guests": {
-      const count = request.newCount + (option.guestCountChange ?? 0);
-      lines = scaleForGuests(event.budget, event.profile.guestCount, count);
-      profile = { ...profile, guestCount: count };
-      break;
-    }
-    case "date":
-      tasks = shiftAll(event.tasks, daysBetween(event.profile.date, request.newDate));
-      profile = { ...profile, date: request.newDate };
-      break;
-    case "delay": {
-      const shifted = shiftWithDependents(event.tasks, request.taskId, request.days, profile.date);
-      if (!shifted.ok) return err("unknown_task");
-      tasks = shifted.value.tasks;
-      break;
-    }
-    case "budget":
-      break;
-  }
-
-  const byCategory = new Map(lines.map((l) => [l.category, l]));
-  const deltas = new Map<string, number>();
-  for (const a of option.adjustments) {
-    const line = byCategory.get(a.category);
-    if (!line) return err("unknown_category");
-    if (line.locked && a.delta !== 0) return err("locked_category");
-    deltas.set(line.id, (deltas.get(line.id) ?? 0) + a.delta);
-  }
-  lines = lines.map((l) => {
-    const d = deltas.get(l.id);
-    return d ? { ...l, allocated: l.allocated + d } : l;
-  });
-  if (lines.some((l) => l.allocated < usedAmount(l))) return err("below_committed");
-  if (sum(lines.map((l) => l.allocated)) !== total) return err("unbalanced");
-
+  const applied = applyRequest(event, request, option);
+  if (!applied.ok) return applied;
+  const lines = applyAdjustments(applied.value.lines, option.adjustments, total);
+  if (!lines.ok) return lines;
   return ok({
     ...event,
-    profile: { ...profile, totalBudget: total },
-    budget: lines,
-    tasks,
+    profile: { ...applied.value.profile, totalBudget: total },
+    budget: lines.value,
+    tasks: applied.value.tasks,
     changeLog: [
       ...event.changeLog,
       { at: now, summary: `${describeChange(event, request)}: ${option.label}` },

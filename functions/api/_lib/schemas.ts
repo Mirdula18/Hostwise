@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS, TEXT } from "../../../src/lib/constants";
 import {
   AgeGroup,
   EventProfile,
@@ -12,41 +13,47 @@ import {
 /** Request bodies accepted by /api/gemini. Only these tasks exist; there is no raw prompt. */
 
 const Text = (max: number) => z.string().max(max);
-const FixHint = { _fixHint: Text(1000).optional() };
+const FixHint = { _fixHint: Text(TEXT.LONG_NOTE).optional() };
 
 const IntakeAnswers = z
   .object({
     occasion: Occasion,
-    title: Text(80),
+    title: Text(TEXT.NAME),
     date: z.string().date(),
-    guestCount: z.number().int().min(1).max(1000),
+    guestCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX),
     totalBudget: z.number().int().positive(),
-    currency: Text(3),
-    priorities: z.array(Priority).max(3),
-    ageMix: z.array(AgeGroup).max(4),
-    accessibility: Text(300),
-    dietary: Text(300),
-    culturalContext: Text(300),
+    currency: Text(LIMITS.CURRENCY_CODE_LENGTH),
+    priorities: z.array(Priority).max(LIMITS.PRIORITIES_MAX),
+    ageMix: z.array(AgeGroup).max(LIMITS.AGE_GROUPS_MAX),
+    accessibility: Text(TEXT.NOTE),
+    dietary: Text(TEXT.NOTE),
+    culturalContext: Text(TEXT.NOTE),
     setting: Setting,
-    city: Text(80),
+    city: Text(TEXT.NAME),
   })
   .partial()
   .strict();
 
 export const TaskInputs = {
   intake_next: z
-    .object({ answers: IntakeAnswers, asked: z.array(Text(40)).max(20), ...FixHint })
+    .object({
+      answers: IntakeAnswers,
+      asked: z.array(Text(TEXT.LABEL)).max(LIMITS.INTAKE_ASKED_MAX),
+      ...FixHint,
+    })
     .strict(),
   plan: EventProfile.extend(FixHint).strict(),
   parse_change: z
     .object({
-      text: z.string().min(1).max(500),
+      text: z.string().min(1).max(TEXT.CHANGE),
       today: z.string().date(),
       eventDate: z.string().date(),
-      currency: Text(3),
-      guestCount: z.number().int().min(1).max(1000),
+      currency: Text(LIMITS.CURRENCY_CODE_LENGTH),
+      guestCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX),
       totalBudget: z.number().int().positive(),
-      tasks: z.array(z.object({ id: Text(60), title: Text(120) }).strict()).max(60),
+      tasks: z
+        .array(z.object({ id: Text(TEXT.ID), title: Text(TEXT.TITLE) }).strict())
+        .max(LIMITS.CHANGE_TASKS_MAX),
       ...FixHint,
     })
     .strict(),
@@ -54,30 +61,30 @@ export const TaskInputs = {
     .object({
       profile: z
         .object({
-          priorities: z.array(Priority).min(1).max(3),
-          guestCount: z.number().int().min(1).max(1000),
+          priorities: z.array(Priority).min(1).max(LIMITS.PRIORITIES_MAX),
+          guestCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX),
           occasion: Occasion,
         })
         .strict(),
       impact: Impact,
-      options: z.array(TradeOffOption).min(1).max(6),
+      options: z.array(TradeOffOption).min(1).max(LIMITS.RANK_OPTIONS_MAX),
       categories: z
         .array(
           z
             .object({
-              category: Text(40),
+              category: Text(TEXT.LABEL),
               allocated: z.number().int().min(0),
               locked: z.boolean(),
             })
             .strict(),
         )
-        .max(15),
+        .max(LIMITS.RANK_CATEGORIES_MAX),
       ...FixHint,
     })
     .strict(),
   vendor_questions: z
     .object({
-      category: z.string().min(1).max(40),
+      category: z.string().min(1).max(TEXT.LABEL),
       profile: EventProfile.pick({
         occasion: true,
         guestCount: true,

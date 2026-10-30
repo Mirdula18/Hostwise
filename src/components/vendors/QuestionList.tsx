@@ -2,12 +2,12 @@ import { Copy, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { AIError, callAI } from "../../lib/ai/client";
 import { VendorQuestions } from "../../schemas/ai";
-import type { Event, Vendor } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { AIErrorAlert } from "../ui/AIErrorAlert";
 import { Button } from "../ui/Button";
 import { LiveRegion } from "../ui/LiveRegion";
 import { toast } from "../ui/Toast";
+import type { Event, Vendor } from "../../schemas/event";
 
 type Props = { event: Event; vendor: Vendor };
 

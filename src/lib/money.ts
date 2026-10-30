@@ -1,3 +1,5 @@
+import { LIMITS } from "./constants";
+
 /** All money is stored as integers in minor units (paise, cents). */
 const MINOR_PER_MAJOR = 100;
 
@@ -20,9 +22,10 @@ const LOCALE_FOR_CURRENCY: Record<string, string> = {
   SGD: "en-SG",
 };
 
+const CENT_DIGITS = 2;
 const formatters = new Map<string, Intl.NumberFormat>();
 
-function formatter(currency: string, fractionDigits: 0 | 2): Intl.NumberFormat {
+function formatter(currency: string, fractionDigits: number): Intl.NumberFormat {
   const key = `${currency}:${fractionDigits}`;
   let f = formatters.get(key);
   if (!f) {
@@ -39,7 +42,7 @@ function formatter(currency: string, fractionDigits: 0 | 2): Intl.NumberFormat {
 
 /** Formats minor units for display; whole amounts drop the decimals. */
 export function format(minor: number, currency: string): string {
-  const digits = minor % MINOR_PER_MAJOR === 0 ? 0 : 2;
+  const digits = minor % MINOR_PER_MAJOR === 0 ? 0 : CENT_DIGITS;
   return formatter(currency, digits).format(fromMinor(minor));
 }
 
@@ -82,5 +85,5 @@ export function parseMoney(text: string): number | null {
   const cleaned = text.replace(/[,\s]/g, "");
   if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) return null;
   const n = Number(cleaned);
-  return Number.isFinite(n) && n <= 1e10 ? toMinor(n) : null;
+  return Number.isFinite(n) && n <= LIMITS.BUDGET_MAX_MAJOR ? toMinor(n) : null;
 }

@@ -1,14 +1,14 @@
 import { Pencil, Plus, Receipt, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { QuestionList } from "./QuestionList";
+import { QuoteCompare } from "./QuoteCompare";
+import { QuoteForm } from "./QuoteForm";
+import { STATUS_LABELS, VendorForm } from "./VendorForm";
 import { format } from "../../lib/money";
 import { VendorStatus, type Event, type Vendor } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
-import { QuestionList } from "./QuestionList";
-import { QuoteCompare } from "./QuoteCompare";
-import { QuoteForm } from "./QuoteForm";
-import { STATUS_LABELS, VendorForm } from "./VendorForm";
 
 function VendorCard({ event, vendor }: { event: Event; vendor: Vendor }) {
   const updateVendor = useEventStore((s) => s.updateVendor);

@@ -1,21 +1,33 @@
 import { useState, type FormEvent } from "react";
+import { TEXT } from "../../lib/constants";
+import { taskInput, type TaskFields } from "../../lib/forms";
 import { transitiveDependents } from "../../lib/timeline";
-import type { Event, Task } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { Field, inputClass } from "../ui/Field";
+import type { Event, Task } from "../../schemas/event";
 
 type Props = { event: Event; task?: Task; open: boolean; onClose: () => void };
+
+function initialFields(task: Task | undefined, eventDate: string): TaskFields {
+  return {
+    title: task?.title ?? "",
+    category: task?.category ?? "",
+    dueDate: task?.dueDate ?? eventDate,
+    dependsOn: task?.dependsOn ?? [],
+  };
+}
 
 /** Add a custom task, or edit an existing one. Circular dependencies are refused. */
 export function TaskForm({ event, task, open, onClose }: Props) {
   const addTask = useEventStore((s) => s.addTask);
   const updateTask = useEventStore((s) => s.updateTask);
-  const [title, setTitle] = useState(task?.title ?? "");
-  const [category, setCategory] = useState(task?.category ?? "");
-  const [dueDate, setDueDate] = useState(task?.dueDate ?? event.profile.date);
-  const [deps, setDeps] = useState<string[]>(task?.dependsOn ?? []);
+  const init = initialFields(task, event.profile.date);
+  const [title, setTitle] = useState(init.title);
+  const [category, setCategory] = useState(init.category);
+  const [dueDate, setDueDate] = useState(init.dueDate);
+  const [deps, setDeps] = useState<string[]>(init.dependsOn);
   const [error, setError] = useState<string | null>(null);
 
   // A task cannot wait for itself or for anything that already waits for it.
@@ -24,21 +36,12 @@ export function TaskForm({ event, task, open, onClose }: Props) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (title.trim() === "" || title.length > 120) {
-      setError("Give the task a title (up to 120 characters).");
+    const input = taskInput({ title, category, dueDate, dependsOn: deps });
+    if (!input.ok) {
+      setError(input.error);
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
-      setError("Choose a due date.");
-      return;
-    }
-    const input = {
-      title: title.trim(),
-      category: category.trim().slice(0, 40),
-      dueDate,
-      dependsOn: deps,
-    };
-    const r = task ? updateTask(event.id, task.id, input) : addTask(event.id, input);
+    const r = task ? updateTask(event.id, task.id, input.value) : addTask(event.id, input.value);
     if (!r.ok) {
       setError(r.error.kind === "cycle" ? r.error.message : "That task could not be saved.");
       return;
@@ -60,7 +63,7 @@ export function TaskForm({ event, task, open, onClose }: Props) {
               {...p}
               className={inputClass}
               value={title}
-              maxLength={120}
+              maxLength={TEXT.TITLE}
               onChange={(e) => setTitle(e.target.value)}
             />
           )}
@@ -71,7 +74,7 @@ export function TaskForm({ event, task, open, onClose }: Props) {
               {...p}
               className={inputClass}
               value={category}
-              maxLength={40}
+              maxLength={TEXT.LABEL}
               onChange={(e) => setCategory(e.target.value)}
             />
           )}

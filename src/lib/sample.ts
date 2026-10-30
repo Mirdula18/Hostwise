@@ -1,8 +1,8 @@
-import type { AIPlan } from "../schemas/ai";
-import type { Event, EventProfile } from "../schemas/event";
 import { makeId, type IdGen } from "./id";
 import { planToEvent } from "./plan";
 import { shiftDate } from "./timeline";
+import type { AIPlan } from "../schemas/ai";
+import type { Event, EventProfile } from "../schemas/event";
 
 /** The persona from the PRD: Maya's parents' 35th anniversary dinner. */
 export const SAMPLE_PLAN: AIPlan = {
@@ -190,11 +190,15 @@ export const SAMPLE_PLAN: AIPlan = {
   ],
 };
 
+/** The sample event is seven weeks away, so every timeline bucket has tasks. */
+const SAMPLE_DAYS_AHEAD = 49;
+
+/** The sample host's answers, dated relative to `today`. */
 export function sampleProfile(today: string): EventProfile {
   return {
     occasion: "anniversary",
     title: "Mum & Dad's 35th Anniversary",
-    date: shiftDate(today, 49),
+    date: shiftDate(today, SAMPLE_DAYS_AHEAD),
     guestCount: 60,
     totalBudget: 30_000_000,
     currency: "INR",
@@ -208,15 +212,9 @@ export function sampleProfile(today: string): EventProfile {
   };
 }
 
-/** A complete, realistic event so judges can explore without intake or AI calls. */
-export function createSampleEvent(
-  today: string,
-  now: string = new Date().toISOString(),
-  idGen: IdGen = makeId,
-): Event {
-  const event = planToEvent(sampleProfile(today), SAMPLE_PLAN, now, idGen);
-  const caterTask = event.tasks.find((t) => t.title.startsWith("Book the caterer"));
-  const vendors: Event["vendors"] = [
+/** Two catering quotes to compare on the Vendors tab. */
+function sampleVendors(idGen: IdGen): Event["vendors"] {
+  return [
     {
       id: idGen("vendor"),
       name: "Annapurna Caterers",
@@ -251,6 +249,17 @@ export function createSampleEvent(
       ],
     },
   ];
+}
+
+/** A complete, realistic event so judges can explore without intake or AI calls. */
+export function createSampleEvent(
+  today: string,
+  now: string = new Date().toISOString(),
+  idGen: IdGen = makeId,
+): Event {
+  const event = planToEvent(sampleProfile(today), SAMPLE_PLAN, now, idGen);
+  const caterTask = event.tasks.find((t) => t.title.startsWith("Book the caterer"));
+  const vendors = sampleVendors(idGen);
   return {
     ...event,
     vendors,

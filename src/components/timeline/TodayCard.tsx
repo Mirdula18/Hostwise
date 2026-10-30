@@ -2,10 +2,10 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useMemo } from "react";
 import { countdown, formatDate } from "../../lib/display";
 import { isOverdue, todayTop3 } from "../../lib/timeline";
-import type { Event } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
+import type { Event } from "../../schemas/event";
 
 type Props = { event: Event; today: string };
 

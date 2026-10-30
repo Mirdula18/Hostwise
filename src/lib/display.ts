@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
-import type { Task } from "../schemas/event";
 import { daysBetween } from "./timeline";
+import type { Task } from "../schemas/event";
 
 /** "Fri 18 Dec 2026" from an ISO `yyyy-MM-dd` date. */
 export function formatDate(iso: string): string {

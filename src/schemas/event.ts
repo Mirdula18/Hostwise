@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS, TEXT } from "../lib/constants";
 
 export const Priority = z.enum([
   "food",
@@ -43,24 +44,24 @@ const IsoDate = z.string().date();
 /** Shape of the intake answers; "date must be in the future" is checked by `isFutureDate`. */
 export const EventProfile = z.object({
   occasion: Occasion,
-  title: z.string().min(1).max(80),
+  title: z.string().min(1).max(TEXT.NAME),
   date: IsoDate,
-  guestCount: z.number().int().min(1).max(1000),
+  guestCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX),
   totalBudget: z.number().int().positive(),
-  currency: z.string().length(3),
-  priorities: z.array(Priority).min(1).max(3),
+  currency: z.string().length(LIMITS.CURRENCY_CODE_LENGTH),
+  priorities: z.array(Priority).min(1).max(LIMITS.PRIORITIES_MAX),
   ageMix: z.array(AgeGroup).optional(),
-  accessibility: z.string().max(300).optional(),
-  dietary: z.string().max(300).optional(),
-  culturalContext: z.string().max(300).optional(),
+  accessibility: z.string().max(TEXT.NOTE).optional(),
+  dietary: z.string().max(TEXT.NOTE).optional(),
+  culturalContext: z.string().max(TEXT.NOTE).optional(),
   setting: Setting.optional(),
-  city: z.string().max(80).optional(),
+  city: z.string().max(TEXT.NAME).optional(),
 });
 export type EventProfile = z.infer<typeof EventProfile>;
 
 export const BudgetLine = z.object({
   id: z.string(),
-  category: z.string().min(1).max(40),
+  category: z.string().min(1).max(TEXT.LABEL),
   priorityTag: Priority.optional(),
   allocated: z.number().int().min(0),
   committed: z.number().int().min(0),
@@ -68,14 +69,14 @@ export const BudgetLine = z.object({
   perGuest: z.boolean(),
   locked: z.boolean(),
   source: Source,
-  rationale: z.string().max(300).optional(),
+  rationale: z.string().max(TEXT.NOTE).optional(),
 });
 export type BudgetLine = z.infer<typeof BudgetLine>;
 
 export const Task = z.object({
   id: z.string(),
-  title: z.string().min(1).max(120),
-  category: z.string().max(40),
+  title: z.string().min(1).max(TEXT.TITLE),
+  category: z.string().max(TEXT.LABEL),
   dueDate: IsoDate,
   status: TaskStatus,
   dependsOn: z.array(z.string()),
@@ -88,21 +89,21 @@ export type Task = z.infer<typeof Task>;
 export const Quote = z.object({
   id: z.string(),
   amount: z.number().int().positive(),
-  includes: z.string().max(500),
+  includes: z.string().max(TEXT.CHANGE),
   validUntil: IsoDate.optional(),
   deposit: z.number().int().min(0).optional(),
-  cancellation: z.string().max(300).optional(),
+  cancellation: z.string().max(TEXT.NOTE).optional(),
   accepted: z.boolean(),
 });
 export type Quote = z.infer<typeof Quote>;
 
 export const Vendor = z.object({
   id: z.string(),
-  name: z.string().min(1).max(80),
-  category: z.string().max(40),
-  contact: z.string().max(200).optional(),
+  name: z.string().min(1).max(TEXT.NAME),
+  category: z.string().max(TEXT.LABEL),
+  contact: z.string().max(TEXT.SHORT_NOTE).optional(),
   status: VendorStatus,
-  notes: z.string().max(1000).optional(),
+  notes: z.string().max(TEXT.LONG_NOTE).optional(),
   quotes: z.array(Quote),
   questions: z.array(z.string()).optional(),
 });
@@ -110,14 +111,14 @@ export type Vendor = z.infer<typeof Vendor>;
 
 export const ChangeRequest = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("budget"), newTotal: z.number().int().positive() }),
-  z.object({ kind: z.literal("guests"), newCount: z.number().int().min(1).max(1000) }),
+  z.object({ kind: z.literal("guests"), newCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX) }),
   z.object({ kind: z.literal("date"), newDate: IsoDate }),
   z.object({
     kind: z.literal("delay"),
     taskId: z.string(),
-    days: z.number().int().min(1).max(120),
+    days: z.number().int().min(1).max(LIMITS.DELAY_DAYS_MAX),
   }),
-  z.object({ kind: z.literal("unclear"), clarifyingQuestion: z.string().min(1).max(300) }),
+  z.object({ kind: z.literal("unclear"), clarifyingQuestion: z.string().min(1).max(TEXT.NOTE) }),
 ]);
 export type ChangeRequest = z.infer<typeof ChangeRequest>;
 /** A change the engine can act on (everything except "unclear"). */
@@ -154,8 +155,8 @@ export const Event = z.object({
   budget: z.array(BudgetLine),
   tasks: z.array(Task),
   vendors: z.array(Vendor),
-  theme: z.string().max(600).optional(),
-  assumptions: z.array(z.string().max(200)),
+  theme: z.string().max(TEXT.THEME).optional(),
+  assumptions: z.array(z.string().max(TEXT.SHORT_NOTE)),
   changeLog: z.array(ChangeLogEntry),
   createdAt: z.string(),
   updatedAt: z.string(),

@@ -2,11 +2,11 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useMemo } from "react";
 import { format } from "../../lib/money";
 import { compareQuotes } from "../../lib/vendors";
-import type { Event } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { toast } from "../ui/Toast";
+import type { Event } from "../../schemas/event";
 
 type Props = { event: Event; category: string };
 

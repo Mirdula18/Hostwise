@@ -1,6 +1,6 @@
+import { PRIORITY_LABELS } from "./priorities";
 import type { InputType, NextQuestion } from "../schemas/ai";
 import type { EventProfile, Occasion } from "../schemas/event";
-import { PRIORITY_LABELS } from "./priorities";
 
 export type IntakeField = keyof EventProfile;
 export type IntakeAnswers = Partial<EventProfile>;

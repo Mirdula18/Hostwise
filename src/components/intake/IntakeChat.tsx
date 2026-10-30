@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ProgressBar } from "./ProgressBar";
+import { QuestionStep } from "./QuestionStep";
 import { AIError, callAI } from "../../lib/ai/client";
 import {
   displayAnswer,
   fallbackQuestion,
   finalizeProfile,
+  keepAnswers,
   normalizeQuestion,
   parseAnswer,
   rawFor,
@@ -17,16 +20,81 @@ import { planToEvent } from "../../lib/plan";
 import { starterPlan } from "../../lib/starterPlan";
 import { todayIso } from "../../lib/timeline";
 import { AIPlan, NextQuestion } from "../../schemas/ai";
-import type { EventProfile } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { AIErrorAlert } from "../ui/AIErrorAlert";
 import { Button } from "../ui/Button";
 import { LiveRegion } from "../ui/LiveRegion";
-import { ProgressBar } from "./ProgressBar";
-import { QuestionStep } from "./QuestionStep";
+import type { EventProfile } from "../../schemas/event";
 
 type Step = { question: IntakeQuestion };
+type Next = IntakeQuestion | { done: true };
+type AIOutcome = Next | null | "aborted" | "failed";
+
+const isQuestion = (o: AIOutcome): o is Next => o !== null && typeof o === "object";
+
+/** The AI's next question; null means "use the static flow", "failed" means go offline. */
+async function aiQuestion(
+  answers: IntakeAnswers,
+  asked: string[],
+  signal: AbortSignal,
+): Promise<AIOutcome> {
+  try {
+    const ai = await callAI("intake_next", { answers, asked }, NextQuestion, { signal });
+    return normalizeQuestion(ai, answers, asked);
+  } catch (e) {
+    return e instanceof AIError && e.code === "aborted" ? "aborted" : "failed";
+  }
+}
+
+type AnswersProps = { steps: Step[]; answers: IntakeAnswers; onChange: (index: number) => void };
+
+/** The answers so far, each with a Change button that reopens that question. */
+function AnswersList({ steps, answers, onChange }: AnswersProps) {
+  return (
+    <aside aria-labelledby="answers-heading" className="space-y-2">
+      <h2 id="answers-heading" className="text-lg font-bold">
+        Your answers
+      </h2>
+      <ol className="space-y-2">
+        {steps.map((s, i) => (
+          <li key={s.question.field} className="rounded-lg border border-line bg-surface p-2">
+            <p className="text-sm text-muted">{FIELD_SPECS[s.question.field].question}</p>
+            <p className="font-medium">{displayAnswer(s.question.field, answers)}</p>
+            <Button
+              variant="ghost"
+              className="-ml-2"
+              aria-label={`Change answer: ${FIELD_SPECS[s.question.field].question}`}
+              onClick={() => onChange(i)}
+            >
+              Change
+            </Button>
+          </li>
+        ))}
+      </ol>
+    </aside>
+  );
+}
 type Phase = "loading" | "asking" | "planning" | "planError";
+
+type PlanFailedProps = {
+  message: string | null;
+  profile: EventProfile;
+  onBuild: (profile: EventProfile, useStarter?: boolean) => Promise<void>;
+};
+
+/** Plan generation failed: retry the AI, or fall back to the starter plan. */
+function PlanFailed({ message, profile, onBuild }: PlanFailedProps) {
+  return (
+    <AIErrorAlert
+      message={`${message ?? ""} Your answers are kept.`}
+      onRetry={() => void onBuild(profile)}
+    >
+      <Button variant="secondary" onClick={() => void onBuild(profile, true)}>
+        Use a starter plan instead
+      </Button>
+    </AIErrorAlert>
+  );
+}
 
 /**
  * One question at a time. Gemini picks the next question; if it is unavailable or
@@ -93,21 +161,13 @@ export function IntakeChat() {
       if (reachedLimit(asked)) return finish(next, asked);
       setPhase("loading");
 
-      let q: IntakeQuestion | { done: true } | null = null;
-      if (!offlineRef.current) {
-        try {
-          const ai = await callAI("intake_next", { answers: next, asked }, NextQuestion, {
-            signal: controller.signal,
-          });
-          q = normalizeQuestion(ai, next, asked);
-        } catch (e) {
-          if (e instanceof AIError && e.code === "aborted") return;
-          offlineRef.current = true;
-          setOffline(true);
-        }
+      const ai = offlineRef.current ? null : await aiQuestion(next, asked, controller.signal);
+      if (ai === "aborted" || controller.signal.aborted) return;
+      if (ai === "failed") {
+        offlineRef.current = true;
+        setOffline(true);
       }
-      if (controller.signal.aborted) return;
-      q ??= fallbackQuestion(next, asked);
+      const q = isQuestion(ai) ? ai : fallbackQuestion(next, asked);
       if (q.done) return finish(next, asked);
       setReopened(undefined);
       setCurrent(q);
@@ -149,10 +209,10 @@ export function IntakeChat() {
     abortRef.current?.abort();
     setReopened(rawFor(step.question.field, answers));
     const keep = steps.slice(0, index);
-    const kept = new Set(keep.map((s) => s.question.field));
     setAnswers(
-      Object.fromEntries(
-        Object.entries(answers).filter(([k]) => kept.has(k as IntakeQuestion["field"])),
+      keepAnswers(
+        answers,
+        keep.map((s) => s.question.field),
       ),
     );
     setSteps(keep);
@@ -190,43 +250,11 @@ export function IntakeChat() {
           ) : null}
         </LiveRegion>
         {phase === "planError" && profileRef.current ? (
-          <AIErrorAlert
-            message={`${planError ?? ""} Your answers are kept.`}
-            onRetry={() => profileRef.current && void buildPlan(profileRef.current)}
-          >
-            <Button
-              variant="secondary"
-              onClick={() => profileRef.current && void buildPlan(profileRef.current, true)}
-            >
-              Use a starter plan instead
-            </Button>
-          </AIErrorAlert>
+          <PlanFailed message={planError} profile={profileRef.current} onBuild={buildPlan} />
         ) : null}
       </div>
 
-      {steps.length > 0 ? (
-        <aside aria-labelledby="answers-heading" className="space-y-2">
-          <h2 id="answers-heading" className="text-lg font-bold">
-            Your answers
-          </h2>
-          <ol className="space-y-2">
-            {steps.map((s, i) => (
-              <li key={s.question.field} className="rounded-lg border border-line bg-surface p-2">
-                <p className="text-sm text-muted">{FIELD_SPECS[s.question.field].question}</p>
-                <p className="font-medium">{displayAnswer(s.question.field, answers)}</p>
-                <Button
-                  variant="ghost"
-                  className="-ml-2"
-                  aria-label={`Change answer: ${FIELD_SPECS[s.question.field].question}`}
-                  onClick={() => goTo(i)}
-                >
-                  Change
-                </Button>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      ) : null}
+      {steps.length > 0 ? <AnswersList steps={steps} answers={answers} onChange={goTo} /> : null}
     </div>
   );
 }

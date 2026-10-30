@@ -1,8 +1,8 @@
 import { AlertTriangle } from "lucide-react";
 import { format } from "../../lib/money";
-import type { EventDiff } from "../../lib/ranking";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
+import type { EventDiff } from "../../lib/ranking";
 
 type Props = {
   label: string;

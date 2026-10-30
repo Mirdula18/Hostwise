@@ -1,5 +1,4 @@
-import type { NextQuestion } from "../schemas/ai";
-import { AgeGroup, EventProfile, Occasion, Priority, Setting } from "../schemas/event";
+import { LIMITS, TEXT } from "./constants";
 import {
   CURRENCIES,
   FIELD_SPECS,
@@ -14,12 +13,29 @@ import { format, fromMinor, toMinor } from "./money";
 import { PRIORITY_LABELS } from "./priorities";
 import { err, ok, type Result } from "./result";
 import { isFutureDate } from "./timeline";
+import { AgeGroup, EventProfile, Occasion, Priority, Setting } from "../schemas/event";
+import type { NextQuestion } from "../schemas/ai";
 
 /** A question the UI can render: always tied to a known profile field. */
 export type IntakeQuestion = NextQuestion & { done: false; field: IntakeField; question: string };
 
+/** Narrows a string to a known intake field. */
 export const isIntakeField = (f: string | undefined): f is IntakeField =>
   f !== undefined && f in FIELD_SPECS;
+
+/** True when the AI picked a known field that has not been asked or answered yet. */
+function isNewField(
+  field: string | undefined,
+  answers: IntakeAnswers,
+  asked: readonly string[],
+): field is IntakeField {
+  return isIntakeField(field) && !asked.includes(field) && answers[field] === undefined;
+}
+
+/** The AI helper wins (even when empty) as long as either helper is set. */
+function pickHelper(ai: string | undefined, spec: string | undefined): string | undefined {
+  return ai || spec ? (ai ?? spec) : undefined;
+}
 
 /**
  * Makes an AI question safe to render. The AI chooses the wording; code fixes the
@@ -31,19 +47,17 @@ export function normalizeQuestion(
   answers: IntakeAnswers,
   asked: readonly string[],
 ): IntakeQuestion | { done: true } | null {
-  const missingRequired = REQUIRED_ORDER.some((f) => answers[f] === undefined);
-  if (q.done) return missingRequired ? null : { done: true };
-  if (!isIntakeField(q.field) || asked.includes(q.field) || answers[q.field] !== undefined) {
-    return null;
-  }
+  if (q.done) return REQUIRED_ORDER.some((f) => answers[f] === undefined) ? null : { done: true };
+  if (!isNewField(q.field, answers, asked)) return null;
   const spec = FIELD_SPECS[q.field];
+  const helper = pickHelper(q.helper, spec.helper);
   return {
     done: false,
     field: q.field,
     question: q.question?.trim() || spec.question,
     inputType: spec.inputType,
     ...(spec.options ? { options: spec.options.map((o) => o.value) } : {}),
-    ...(q.helper || spec.helper ? { helper: q.helper ?? spec.helper } : {}),
+    ...(helper !== undefined ? { helper } : {}),
   };
 }
 
@@ -56,70 +70,93 @@ export function fallbackQuestion(
   return q.done || !isIntakeField(q.field) ? { done: true } : (q as IntakeQuestion);
 }
 
+/** True once the intake has asked its maximum number of questions. */
 export const reachedLimit = (asked: readonly string[]) => asked.length >= MAX_QUESTIONS;
 
 const TEXT_LIMITS: Partial<Record<IntakeField, number>> = {
-  title: 80,
-  accessibility: 300,
-  dietary: 300,
-  culturalContext: 300,
-  city: 80,
+  title: TEXT.NAME,
+  accessibility: TEXT.NOTE,
+  dietary: TEXT.NOTE,
+  culturalContext: TEXT.NOTE,
+  city: TEXT.NAME,
 };
 
 export type Raw = string | string[];
 
-/** Validates one answer and converts it to the profile's types (money → minor units). */
-export function parseAnswer(
-  field: IntakeField,
-  raw: Raw,
-  today: string,
-): Result<IntakeAnswers[IntakeField], string> {
-  const text = typeof raw === "string" ? raw.trim() : "";
-  const list = Array.isArray(raw) ? raw : [];
-  switch (field) {
-    case "occasion": {
-      const r = Occasion.safeParse(text);
-      return r.success ? ok(r.data) : err("Choose what you're celebrating.");
-    }
-    case "currency":
-      return CURRENCIES.some((c) => c.value === text) ? ok(text) : err("Choose a currency.");
-    case "setting": {
-      const r = Setting.safeParse(text);
-      return r.success ? ok(r.data) : err("Choose indoors, outdoors or either.");
-    }
-    case "date":
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(text) || Number.isNaN(Date.parse(text))) {
-        return err("Enter a date.");
-      }
-      return isFutureDate(text, today) ? ok(text) : err("Choose a date after today.");
-    case "guestCount": {
-      const n = Number(text);
-      if (text === "" || !Number.isInteger(n) || n < 1 || n > 1000) {
-        return err("Enter a whole number of guests between 1 and 1000.");
-      }
-      return ok(n);
-    }
-    case "totalBudget": {
-      const n = Number(text.replace(/[,\s]/g, ""));
-      if (text === "" || !Number.isFinite(n) || n <= 0) return err("Enter a budget above 0.");
-      if (n > 1e10) return err("That budget is too large.");
-      return ok(toMinor(n));
-    }
-    case "priorities": {
-      const valid = list.filter((p) => Priority.safeParse(p).success) as Priority[];
-      if (valid.length === 0) return err("Rank at least one priority.");
-      return ok(valid.slice(0, 3));
-    }
-    case "ageMix": {
-      const valid = list.filter((a) => AgeGroup.safeParse(a).success) as AgeGroup[];
-      return valid.length > 0 ? ok(valid) : err("Choose at least one age group, or skip.");
-    }
-    default: {
-      const max = TEXT_LIMITS[field] ?? 300;
-      if (text === "") return err("Type an answer, or skip this question.");
-      return text.length > max ? err(`Keep it under ${max} characters.`) : ok(text);
-    }
+type AnswerResult = Result<IntakeAnswers[IntakeField], string>;
+type AnswerInput = { text: string; list: readonly string[]; today: string };
+type AnswerParser = (input: AnswerInput) => AnswerResult;
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseDate({ text, today }: AnswerInput): AnswerResult {
+  if (!ISO_DATE.test(text) || Number.isNaN(Date.parse(text))) return err("Enter a date.");
+  return isFutureDate(text, today) ? ok(text) : err("Choose a date after today.");
+}
+
+function parseGuestCount({ text }: AnswerInput): AnswerResult {
+  const n = Number(text);
+  if (text === "" || !Number.isInteger(n) || n < 1 || n > LIMITS.GUESTS_MAX) {
+    return err(`Enter a whole number of guests between 1 and ${LIMITS.GUESTS_MAX}.`);
   }
+  return ok(n);
+}
+
+function parseBudget({ text }: AnswerInput): AnswerResult {
+  const n = Number(text.replace(/[,\s]/g, ""));
+  if (text === "" || !Number.isFinite(n) || n <= 0) return err("Enter a budget above 0.");
+  if (n > LIMITS.BUDGET_MAX_MAJOR) return err("That budget is too large.");
+  return ok(toMinor(n));
+}
+
+function parsePriorities({ list }: AnswerInput): AnswerResult {
+  const valid = list.filter((p) => Priority.safeParse(p).success) as Priority[];
+  if (valid.length === 0) return err("Rank at least one priority.");
+  return ok(valid.slice(0, LIMITS.PRIORITIES_MAX));
+}
+
+function parseAgeMix({ list }: AnswerInput): AnswerResult {
+  const valid = list.filter((a) => AgeGroup.safeParse(a).success) as AgeGroup[];
+  return valid.length > 0 ? ok(valid) : err("Choose at least one age group, or skip.");
+}
+
+/** Structured fields; every other field is free text with a length limit. */
+const PARSERS: Partial<Record<IntakeField, AnswerParser>> = {
+  occasion: ({ text }) => {
+    const r = Occasion.safeParse(text);
+    return r.success ? ok(r.data) : err("Choose what you're celebrating.");
+  },
+  currency: ({ text }) =>
+    CURRENCIES.some((c) => c.value === text) ? ok(text) : err("Choose a currency."),
+  setting: ({ text }) => {
+    const r = Setting.safeParse(text);
+    return r.success ? ok(r.data) : err("Choose indoors, outdoors or either.");
+  },
+  date: parseDate,
+  guestCount: parseGuestCount,
+  totalBudget: parseBudget,
+  priorities: parsePriorities,
+  ageMix: parseAgeMix,
+};
+
+function parseText(field: IntakeField, text: string): AnswerResult {
+  const max = TEXT_LIMITS[field] ?? TEXT.NOTE;
+  if (text === "") return err("Type an answer, or skip this question.");
+  return text.length > max ? err(`Keep it under ${max} characters.`) : ok(text);
+}
+
+/** Validates one answer and converts it to the profile's types (money → minor units). */
+export function parseAnswer(field: IntakeField, raw: Raw, today: string): AnswerResult {
+  const text = typeof raw === "string" ? raw.trim() : "";
+  const parser = PARSERS[field];
+  if (!parser) return parseText(field, text);
+  return parser({ text, list: Array.isArray(raw) ? raw : [], today });
+}
+
+/** Only the answers for `fields`; used when the host goes back to an earlier question. */
+export function keepAnswers(answers: IntakeAnswers, fields: readonly IntakeField[]): IntakeAnswers {
+  const kept = new Set<string>(fields);
+  return Object.fromEntries(Object.entries(answers).filter(([k]) => kept.has(k)));
 }
 
 /** Builds the final profile, filling in a default title. */

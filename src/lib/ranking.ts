@@ -1,3 +1,7 @@
+import { validateCustomOption } from "./change";
+import { format } from "./money";
+import { err, ok, type Result } from "./result";
+import { isFutureDate } from "./timeline";
 import type { RankResult } from "../schemas/ai";
 import type {
   ActionableChange,
@@ -6,10 +10,6 @@ import type {
   Impact,
   TradeOffOption,
 } from "../schemas/event";
-import { validateCustomOption } from "./change";
-import { format } from "./money";
-import { err, ok, type Result } from "./result";
-import { isFutureDate } from "./timeline";
 
 export type RankedOption = TradeOffOption & {
   rank: number;
@@ -17,6 +17,26 @@ export type RankedOption = TradeOffOption & {
   whatTheyGiveUp?: string;
   aiSuggested?: boolean;
 };
+
+/** Options the AI ranked (known ids, first mention wins), then the rest in code order. */
+function rankedFirst(
+  options: readonly TradeOffOption[],
+  ranking: RankResult["ranking"],
+): RankedOption[] {
+  const byId = new Map(options.map((o) => [o.id, o]));
+  const seen = new Set<string>();
+  const ordered: RankedOption[] = [];
+  for (const r of ranking) {
+    const option = byId.get(r.optionId);
+    if (!option || seen.has(option.id)) continue;
+    seen.add(option.id);
+    ordered.push({ ...option, rank: 0, why: r.why, whatTheyGiveUp: r.whatTheyGiveUp });
+  }
+  for (const option of options) {
+    if (!seen.has(option.id)) ordered.push({ ...option, rank: 0 });
+  }
+  return ordered;
+}
 
 /**
  * Orders code-generated options by the AI ranking and attaches its explanations.
@@ -29,23 +49,23 @@ export function mergeRanking(
   options: readonly TradeOffOption[],
   ranking: RankResult | null,
 ): RankedOption[] {
-  const byId = new Map(options.map((o) => [o.id, o]));
-  const seen = new Set<string>();
-  const ordered: RankedOption[] = [];
-  for (const r of ranking?.ranking ?? []) {
-    const option = byId.get(r.optionId);
-    if (!option || seen.has(option.id)) continue;
-    seen.add(option.id);
-    ordered.push({ ...option, rank: 0, why: r.why, whatTheyGiveUp: r.whatTheyGiveUp });
-  }
-  for (const option of options) {
-    if (!seen.has(option.id)) ordered.push({ ...option, rank: 0 });
-  }
+  const ordered = rankedFirst(options, ranking?.ranking ?? []);
   if (ranking?.custom) {
     const custom = validateCustomOption(event, impact, ranking.custom);
     if (custom) ordered.push({ ...custom, rank: 0, why: ranking.custom.why, aiSuggested: true });
   }
   return ordered.map((o, i) => ({ ...o, rank: i + 1 }));
+}
+
+function checkDate(
+  current: string,
+  request: Extract<ChangeRequest, { kind: "date" }>,
+  today: string,
+): Result<ActionableChange, string> {
+  if (request.newDate === current) return err(`The event is already on ${current}.`);
+  return isFutureDate(request.newDate, today)
+    ? ok(request)
+    : err("The new date needs to be after today.");
 }
 
 /**
@@ -70,10 +90,7 @@ export function checkChange(
         ? err(`You already have ${profile.guestCount} guests planned.`)
         : ok(request);
     case "date":
-      if (request.newDate === profile.date) return err(`The event is already on ${profile.date}.`);
-      return isFutureDate(request.newDate, today)
-        ? ok(request)
-        : err("The new date needs to be after today.");
+      return checkDate(profile.date, request, today);
     case "delay":
       return event.tasks.some((t) => t.id === request.taskId)
         ? ok(request)

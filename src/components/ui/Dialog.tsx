@@ -13,6 +13,26 @@ type Props = {
   children: ReactNode;
 };
 
+/** Keeps Tab and Shift+Tab cycling inside the dialog panel. */
+function trapTab(e: KeyboardEvent, panel: HTMLElement): void {
+  const items = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)];
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (!first || !last) return;
+  const active = document.activeElement;
+  const inside = panel.contains(active);
+  const wrapTo = e.shiftKey
+    ? active === first || !inside
+      ? last
+      : null
+    : active === last || !inside
+      ? first
+      : null;
+  if (!wrapTo) return;
+  e.preventDefault();
+  wrapTo.focus();
+}
+
 /**
  * Modal dialog: focus moves inside on open, Tab is trapped, Esc closes,
  * and focus returns to whatever opened it.
@@ -37,19 +57,7 @@ export function Dialog({ open, onClose, title, description, children }: Props) {
         onCloseRef.current();
         return;
       }
-      if (e.key !== "Tab" || !panel.current) return;
-      const items = [...panel.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
-      const firstItem = items[0];
-      const lastItem = items[items.length - 1];
-      if (!firstItem || !lastItem) return;
-      const inside = panel.current.contains(document.activeElement);
-      if (e.shiftKey && (document.activeElement === firstItem || !inside)) {
-        e.preventDefault();
-        lastItem.focus();
-      } else if (!e.shiftKey && (document.activeElement === lastItem || !inside)) {
-        e.preventDefault();
-        firstItem.focus();
-      }
+      if (e.key === "Tab" && panel.current) trapTab(e, panel.current);
     };
     document.addEventListener("keydown", onKeyDown);
     return () => {

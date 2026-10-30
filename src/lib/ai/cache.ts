@@ -8,21 +8,27 @@ export function stableStringify(value: unknown): string {
   return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`).join(",")}}`;
 }
 
+const FNV_OFFSET_BASIS = 0x811c9dc5;
+const FNV_PRIME = 0x01000193;
+const HEX = 16;
+const HASH_HEX_DIGITS = 8;
+const DEFAULT_CACHE_SIZE = 50;
+
 /** 32-bit FNV-1a hash, hex encoded. Short cache keys; collisions only cost a cache miss. */
 export function hashKey(text: string): string {
-  let h = 0x811c9dc5;
+  let h = FNV_OFFSET_BASIS;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
+    h = Math.imul(h, FNV_PRIME);
   }
-  return (h >>> 0).toString(16).padStart(8, "0");
+  return (h >>> 0).toString(HEX).padStart(HASH_HEX_DIGITS, "0");
 }
 
 /** Least-recently-used cache backed by Map insertion order. */
 export class LRUCache<V> {
   private map = new Map<string, V>();
 
-  constructor(private readonly max = 50) {}
+  constructor(private readonly max = DEFAULT_CACHE_SIZE) {}
 
   get(key: string): V | undefined {
     if (!this.map.has(key)) return undefined;
@@ -50,6 +56,7 @@ export class LRUCache<V> {
   }
 }
 
+/** Cache key for a task call: task name, input hash and input length. */
 export function cacheKey(task: string, input: unknown): string {
   const text = stableStringify(input);
   return `${task}:${hashKey(text)}:${text.length}`;

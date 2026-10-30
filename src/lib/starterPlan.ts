@@ -1,6 +1,6 @@
+import { daysBetween } from "./timeline";
 import type { AIPlan, AIBudgetItem } from "../schemas/ai";
 import type { EventProfile } from "../schemas/event";
-import { daysBetween } from "./timeline";
 
 const BASE: AIBudgetItem[] = [
   { category: "Catering", percent: 34, perGuest: true, priorityTag: "food" },
@@ -13,31 +13,81 @@ const BASE: AIBudgetItem[] = [
   { category: "Contingency", percent: 11, perGuest: false },
 ];
 
-const BOOST = [8, 5, 3];
+/** Extra percent for the host's 1st, 2nd and 3rd priority. */
+const BOOST_FIRST = 8;
+const BOOST_SECOND = 5;
+const BOOST_THIRD = 3;
+const BOOST = [BOOST_FIRST, BOOST_SECOND, BOOST_THIRD];
 
-const TASKS: [string, string, number, string[]][] = [
-  ["Confirm the date with key guests", "Planning", 56, []],
-  ["Draft the guest list", "Guests", 52, ["t1"]],
-  ["Shortlist and visit venues", "Venue", 49, ["t1"]],
-  ["Book the venue", "Venue", 42, ["t3"]],
-  ["Send invitations with RSVP and dietary questions", "Guests", 35, ["t2", "t4"]],
-  ["Get catering quotes", "Catering", 35, ["t4"]],
-  ["Book the caterer", "Catering", 28, ["t6"]],
-  ["Book entertainment or music", "Entertainment", 28, ["t4"]],
-  ["Plan décor and order supplies", "Décor", 21, ["t4"]],
-  ["Confirm final headcount", "Guests", 10, ["t5"]],
-  ["Give final numbers and menu to the caterer", "Catering", 7, ["t7", "t10"]],
-  ["Share the run-of-show with helpers and vendors", "Planning", 2, ["t11"]],
-  ["Event day: arrive early to set up", "Planning", 0, ["t12"]],
+/** The full timeline spans eight weeks; shorter lead times compress every deadline. */
+const FULL_PLAN_DAYS = 56;
+
+type StarterTask = { title: string; category: string; daysBefore: number; dependsOn: string[] };
+
+const TASKS: StarterTask[] = [
+  {
+    title: "Confirm the date with key guests",
+    category: "Planning",
+    daysBefore: 56,
+    dependsOn: [],
+  },
+  { title: "Draft the guest list", category: "Guests", daysBefore: 52, dependsOn: ["t1"] },
+  { title: "Shortlist and visit venues", category: "Venue", daysBefore: 49, dependsOn: ["t1"] },
+  { title: "Book the venue", category: "Venue", daysBefore: 42, dependsOn: ["t3"] },
+  {
+    title: "Send invitations with RSVP and dietary questions",
+    category: "Guests",
+    daysBefore: 35,
+    dependsOn: ["t2", "t4"],
+  },
+  { title: "Get catering quotes", category: "Catering", daysBefore: 35, dependsOn: ["t4"] },
+  { title: "Book the caterer", category: "Catering", daysBefore: 28, dependsOn: ["t6"] },
+  {
+    title: "Book entertainment or music",
+    category: "Entertainment",
+    daysBefore: 28,
+    dependsOn: ["t4"],
+  },
+  { title: "Plan décor and order supplies", category: "Décor", daysBefore: 21, dependsOn: ["t4"] },
+  { title: "Confirm final headcount", category: "Guests", daysBefore: 10, dependsOn: ["t5"] },
+  {
+    title: "Give final numbers and menu to the caterer",
+    category: "Catering",
+    daysBefore: 7,
+    dependsOn: ["t7", "t10"],
+  },
+  {
+    title: "Share the run-of-show with helpers and vendors",
+    category: "Planning",
+    daysBefore: 2,
+    dependsOn: ["t11"],
+  },
+  {
+    title: "Event day: arrive early to set up",
+    category: "Planning",
+    daysBefore: 0,
+    dependsOn: ["t12"],
+  },
 ];
 
-/**
- * A reasonable plan built without AI, used when the assistant is unavailable.
- * Splits lean towards the host's ranked priorities; deadlines are compressed to fit
- * the time left before the event.
- */
-export function starterPlan(profile: EventProfile, today: string): AIPlan {
-  const budget = BASE.map((item) => {
+/** Added only when the host mentioned accessibility or dietary needs. */
+const ACCESS_TASK = {
+  key: "t14",
+  title: "Check step-free access and accessible restrooms",
+  category: "Guest comfort",
+  daysBefore: 21,
+  dependsOn: ["t4"],
+};
+const DIETARY_TASK = {
+  key: "t15",
+  title: "Confirm dietary options with the caterer",
+  category: "Catering",
+  daysBefore: 14,
+  dependsOn: ["t7"],
+};
+
+function starterBudget(profile: EventProfile): AIPlan["budget"] {
+  return BASE.map((item) => {
     const rank = item.priorityTag ? profile.priorities.indexOf(item.priorityTag) : -1;
     const boost = rank >= 0 ? (BOOST[rank] ?? 0) : 0;
     return {
@@ -49,42 +99,31 @@ export function starterPlan(profile: EventProfile, today: string): AIPlan {
           : "Typical share for this kind of event.",
     };
   });
+}
+
+function starterTasks(profile: EventProfile, today: string): AIPlan["tasks"] {
   const daysLeft = Math.max(0, daysBetween(today, profile.date) - 1);
-  const scale = Math.min(1, daysLeft / 56);
-  const tasks = TASKS.map(([title, category, offset, dependsOn], i) => ({
-    key: `t${i + 1}`,
-    title,
-    category,
-    dueOffsetDays: Math.round(offset * scale),
-    dependsOn,
-  }));
+  const scale = Math.min(1, daysLeft / FULL_PLAN_DAYS);
+  const toAI = ({ daysBefore, ...t }: StarterTask & { key: string }) => ({
+    ...t,
+    dueOffsetDays: Math.round(daysBefore * scale),
+  });
   const extra = [
-    ...(profile.accessibility
-      ? [
-          {
-            key: "t14",
-            title: "Check step-free access and accessible restrooms",
-            category: "Guest comfort",
-            dueOffsetDays: Math.round(21 * scale),
-            dependsOn: ["t4"],
-          },
-        ]
-      : []),
-    ...(profile.dietary
-      ? [
-          {
-            key: "t15",
-            title: "Confirm dietary options with the caterer",
-            category: "Catering",
-            dueOffsetDays: Math.round(14 * scale),
-            dependsOn: ["t7"],
-          },
-        ]
-      : []),
+    ...(profile.accessibility ? [ACCESS_TASK] : []),
+    ...(profile.dietary ? [DIETARY_TASK] : []),
   ];
+  return [...TASKS.map((t, i) => ({ ...t, key: `t${i + 1}` })), ...extra].map(toAI);
+}
+
+/**
+ * A reasonable plan built without AI, used when the assistant is unavailable.
+ * Splits lean towards the host's ranked priorities; deadlines are compressed to fit
+ * the time left before the event.
+ */
+export function starterPlan(profile: EventProfile, today: string): AIPlan {
   return {
-    budget,
-    tasks: [...tasks, ...extra],
+    budget: starterBudget(profile),
+    tasks: starterTasks(profile, today),
     theme: "",
     assumptions: [
       "This starter plan was made without the AI assistant. Adjust it to fit your event.",

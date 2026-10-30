@@ -1,9 +1,9 @@
-import type { AIBudgetItem } from "../schemas/ai";
-import type { BudgetLine, Priority } from "../schemas/event";
 import { makeId, type IdGen } from "./id";
 import { allocate, sum } from "./money";
 import { priorityForCategory, priorityRank } from "./priorities";
 import { err, ok, type Result } from "./result";
+import type { AIBudgetItem } from "../schemas/ai";
+import type { BudgetLine, Priority } from "../schemas/event";
 
 /** Integer percentages that sum to exactly 100 (empty in, empty out). */
 export function normalisePercents(percents: readonly number[]): number[] {

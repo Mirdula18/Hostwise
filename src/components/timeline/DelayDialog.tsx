@@ -1,7 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
+import { delayDays } from "../../lib/forms";
 import { isAtRisk, shiftWithDependents } from "../../lib/timeline";
-import type { Event, Task } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -9,6 +9,7 @@ import { Dialog } from "../ui/Dialog";
 import { Field, inputClass } from "../ui/Field";
 import { LiveRegion } from "../ui/LiveRegion";
 import { toast } from "../ui/Toast";
+import type { Event, Task } from "../../schemas/event";
 
 type Props = { event: Event; task: Task; open: boolean; onClose: () => void };
 
@@ -17,8 +18,9 @@ export function DelayDialog({ event, task, open, onClose }: Props) {
   const delayTask = useEventStore((s) => s.delayTask);
   const undo = useEventStore((s) => s.undo);
   const [days, setDays] = useState("3");
-  const n = Number(days);
-  const valid = Number.isInteger(n) && n >= 1 && n <= 120;
+  const parsed = delayDays(days);
+  const valid = parsed !== null;
+  const n = parsed ?? 0;
 
   const preview = useMemo(() => {
     if (!valid) return null;

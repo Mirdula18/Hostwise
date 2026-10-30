@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from "react";
-import type { RebalanceError } from "../../lib/budget";
 import { format, fromMinor, parseMoney } from "../../lib/money";
-import type { BudgetLine } from "../../schemas/event";
 import { useEventStore, type EditMode } from "../../store/useEventStore";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { Field, inputClass } from "../ui/Field";
+import type { RebalanceError } from "../../lib/budget";
+import type { BudgetLine } from "../../schemas/event";
 
 function explain(e: RebalanceError, currency: string): string {
   switch (e.kind) {

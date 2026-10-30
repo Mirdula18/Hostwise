@@ -1,11 +1,11 @@
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useMemo } from "react";
+import { CategoryCard } from "./CategoryCard";
 import { summary } from "../../lib/budget";
 import { shares } from "../../lib/display";
 import { format } from "../../lib/money";
-import type { Event } from "../../schemas/event";
 import { LiveRegion } from "../ui/LiveRegion";
-import { CategoryCard } from "./CategoryCard";
+import type { Event } from "../../schemas/event";
 
 /** Decorative swatches; every segment is also named with its percent in the legend. */
 const SPLIT_COLOURS = [

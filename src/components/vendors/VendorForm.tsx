@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from "react";
+import { TEXT } from "../../lib/constants";
+import { vendorInput, type VendorFields } from "../../lib/forms";
 import { VendorStatus, type Event, type Vendor } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Button } from "../ui/Button";
@@ -15,32 +17,41 @@ export const STATUS_LABELS: Record<VendorStatus, string> = {
 
 type Props = { event: Event; vendor?: Vendor; open: boolean; onClose: () => void };
 
+function initialFields(vendor: Vendor | undefined, categories: string[]): VendorFields {
+  if (!vendor) {
+    return {
+      name: "",
+      category: categories[0] ?? "",
+      contact: "",
+      status: "considering",
+      notes: "",
+    };
+  }
+  const { name, category, status } = vendor;
+  return { name, category, status, contact: vendor.contact ?? "", notes: vendor.notes ?? "" };
+}
+
 export function VendorForm({ event, vendor, open, onClose }: Props) {
   const addVendor = useEventStore((s) => s.addVendor);
   const updateVendor = useEventStore((s) => s.updateVendor);
   const categories = event.budget.map((l) => l.category);
-  const [name, setName] = useState(vendor?.name ?? "");
-  const [category, setCategory] = useState(vendor?.category ?? categories[0] ?? "");
-  const [contact, setContact] = useState(vendor?.contact ?? "");
-  const [status, setStatus] = useState<VendorStatus>(vendor?.status ?? "considering");
-  const [notes, setNotes] = useState(vendor?.notes ?? "");
+  const init = initialFields(vendor, categories);
+  const [name, setName] = useState(init.name);
+  const [category, setCategory] = useState(init.category);
+  const [contact, setContact] = useState(init.contact);
+  const [status, setStatus] = useState<VendorStatus>(init.status);
+  const [notes, setNotes] = useState(init.notes);
   const [error, setError] = useState<string | null>(null);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (name.trim() === "") {
-      setError("Enter the vendor's name.");
+    const input = vendorInput({ name, category, status, contact, notes });
+    if (!input.ok) {
+      setError(input.error);
       return;
     }
-    const input = {
-      name: name.trim().slice(0, 80),
-      category,
-      status,
-      ...(contact.trim() ? { contact: contact.trim().slice(0, 200) } : {}),
-      ...(notes.trim() ? { notes: notes.trim().slice(0, 1000) } : {}),
-    };
-    if (vendor) updateVendor(event.id, vendor.id, input);
-    else addVendor(event.id, input);
+    if (vendor) updateVendor(event.id, vendor.id, input.value);
+    else addVendor(event.id, input.value);
     onClose();
   };
 
@@ -52,7 +63,7 @@ export function VendorForm({ event, vendor, open, onClose }: Props) {
             <input
               {...p}
               className={inputClass}
-              maxLength={80}
+              maxLength={TEXT.NAME}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -98,7 +109,7 @@ export function VendorForm({ event, vendor, open, onClose }: Props) {
             <input
               {...p}
               className={inputClass}
-              maxLength={200}
+              maxLength={TEXT.SHORT_NOTE}
               value={contact}
               onChange={(e) => setContact(e.target.value)}
             />
@@ -110,7 +121,7 @@ export function VendorForm({ event, vendor, open, onClose }: Props) {
               {...p}
               className={inputClass}
               rows={3}
-              maxLength={1000}
+              maxLength={TEXT.LONG_NOTE}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />

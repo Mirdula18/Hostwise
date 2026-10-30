@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { create } from "zustand";
+import { LIMITS } from "../../lib/constants";
 
 export const TOAST_MS = 10_000;
 
@@ -18,7 +19,9 @@ let nextId = 1;
 export const useToasts = create<ToastState>()((set) => ({
   toasts: [],
   show: (message, action) =>
-    set((s) => ({ toasts: [...s.toasts.slice(-2), { id: nextId++, message, action }] })),
+    set((s) => ({
+      toasts: [...s.toasts.slice(1 - LIMITS.VISIBLE_TOASTS), { id: nextId++, message, action }],
+    })),
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }));
 

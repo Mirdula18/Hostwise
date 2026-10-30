@@ -1,6 +1,7 @@
-import type { ZodType } from "zod";
-import type { AITaskName } from "../../schemas/ai";
+import { HTTP, SECOND_MS } from "../constants";
 import { cacheKey, LRUCache } from "./cache";
+import type { AITaskName } from "../../schemas/ai";
+import type { ZodType } from "zod";
 
 type AIErrorCode =
   | "timeout"
@@ -21,6 +22,7 @@ const FRIENDLY: Record<AIErrorCode, string> = {
   aborted: "The request was cancelled.",
 };
 
+/** A failed AI call; `message` is always a friendly sentence safe to show the user. */
 export class AIError extends Error {
   constructor(public readonly code: AIErrorCode) {
     super(FRIENDLY[code]);
@@ -28,10 +30,19 @@ export class AIError extends Error {
   }
 }
 
-const CLIENT_TIMEOUT_MS = 20_000;
+const CLIENT_TIMEOUT_S = 20;
+const CLIENT_TIMEOUT_MS = CLIENT_TIMEOUT_S * SECOND_MS;
+const CACHE_SIZE = 50;
+/** Validation issues quoted back to the model in the retry hint. */
+const HINT_ISSUES = 5;
+const BAD_REQUEST_STATUSES: ReadonlySet<number> = new Set([
+  HTTP.BAD_REQUEST,
+  HTTP.FORBIDDEN,
+  HTTP.TOO_LARGE,
+]);
 const ENDPOINT = "/api/gemini";
 
-const sharedCache = new LRUCache<unknown>(50);
+const sharedCache = new LRUCache<unknown>(CACHE_SIZE);
 
 type CallOptions = {
   fetchImpl?: typeof fetch;
@@ -42,11 +53,36 @@ type CallOptions = {
 
 type Envelope = { data?: unknown; error?: { code?: string } };
 
+/** Maps a non-OK proxy response to the client's error code. */
 function codeForStatus(status: number): AIErrorCode {
-  if (status === 429) return "rate_limited";
-  if (status === 504) return "timeout";
-  if (status === 400 || status === 413 || status === 403) return "bad_request";
+  if (status === HTTP.RATE_LIMITED) return "rate_limited";
+  if (status === HTTP.GATEWAY_TIMEOUT) return "timeout";
+  if (BAD_REQUEST_STATUSES.has(status)) return "bad_request";
   return "unavailable";
+}
+
+/** Turns a proxy response into its data, or throws the matching AIError. */
+async function readEnvelope(res: Response): Promise<unknown> {
+  let body: Envelope;
+  try {
+    body = (await res.json()) as Envelope;
+  } catch {
+    throw new AIError(res.ok ? "invalid_response" : codeForStatus(res.status));
+  }
+  if (!res.ok || body.error) {
+    throw new AIError(
+      body.error?.code === "bad_output" ? "invalid_response" : codeForStatus(res.status),
+    );
+  }
+  return body.data;
+}
+
+/** Classifies a thrown error once the request has failed. */
+function toAIError(e: unknown, timedOut: boolean, signal?: AbortSignal): AIError {
+  if (e instanceof AIError) return e;
+  if (timedOut) return new AIError("timeout");
+  if (signal?.aborted) return new AIError("aborted");
+  return new AIError("network");
 }
 
 async function post(
@@ -69,23 +105,9 @@ async function post(
       body: JSON.stringify({ task, input }),
       signal: controller.signal,
     });
-    let body: Envelope;
-    try {
-      body = (await res.json()) as Envelope;
-    } catch {
-      throw new AIError(res.ok ? "invalid_response" : codeForStatus(res.status));
-    }
-    if (!res.ok || body.error) {
-      throw new AIError(
-        body.error?.code === "bad_output" ? "invalid_response" : codeForStatus(res.status),
-      );
-    }
-    return body.data;
+    return await readEnvelope(res);
   } catch (e) {
-    if (e instanceof AIError) throw e;
-    if (timedOut) throw new AIError("timeout");
-    if (signal?.aborted) throw new AIError("aborted");
-    throw new AIError("network");
+    throw toAIError(e, timedOut, signal);
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener("abort", onAbort);
@@ -94,7 +116,7 @@ async function post(
 
 function describeIssues(issues: readonly { path: PropertyKey[]; message: string }[]): string {
   return issues
-    .slice(0, 5)
+    .slice(0, HINT_ISSUES)
     .map((i) => `${i.path.map(String).join(".") || "(root)"}: ${i.message}`)
     .join("; ");
 }
@@ -115,20 +137,17 @@ export async function callAI<T>(
   const hit = cache?.get(key);
   if (hit !== undefined) return hit as T;
 
-  const first = schema.safeParse(await post(task, input, options));
-  if (first.success) {
-    cache?.set(key, first.data);
-    return first.data;
+  let parsed = schema.safeParse(await post(task, input, options));
+  if (!parsed.success) {
+    const hint = `Your previous answer did not match the schema (${describeIssues(parsed.error.issues)}). Fix it and answer again.`;
+    parsed = schema.safeParse(await post(task, { ...input, _fixHint: hint }, options));
   }
-  const hint = `Your previous answer did not match the schema (${describeIssues(first.error.issues)}). Fix it and answer again.`;
-  const second = schema.safeParse(await post(task, { ...input, _fixHint: hint }, options));
-  if (second.success) {
-    cache?.set(key, second.data);
-    return second.data;
-  }
-  throw new AIError("invalid_response");
+  if (!parsed.success) throw new AIError("invalid_response");
+  cache?.set(key, parsed.data);
+  return parsed.data;
 }
 
+/** Empties the shared prompt cache (used by tests and after imports). */
 export function clearAICache(): void {
   sharedCache.clear();
 }

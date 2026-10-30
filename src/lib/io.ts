@@ -1,12 +1,27 @@
-import { StoreFile, type Event } from "../schemas/event";
+import { KIB } from "./constants";
 import { err, ok, type Result } from "./result";
 import { detectCycle } from "./timeline";
+import { StoreFile, type Event } from "../schemas/event";
 
-export const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
+const MAX_IMPORT_MIB = 2;
+/** Largest import file accepted, in bytes. */
+export const MAX_IMPORT_BYTES = MAX_IMPORT_MIB * KIB * KIB;
+const JSON_INDENT = 2;
 
+/** Serialises events as a versioned Hostwise export file. */
 export function exportEvents(events: readonly Event[]): string {
   const file: StoreFile = { version: 1, events: [...events] };
-  return JSON.stringify(file, null, 2);
+  return JSON.stringify(file, null, JSON_INDENT);
+}
+
+/** A message when an event's task graph is broken (missing dependency or cycle). */
+function taskGraphProblem(event: Event): string | null {
+  const ids = new Set(event.tasks.map((t) => t.id));
+  if (event.tasks.some((t) => t.dependsOn.some((d) => !ids.has(d)))) {
+    return `"${event.profile.title}" has a task that depends on a missing task.`;
+  }
+  if (detectCycle(event.tasks)) return `"${event.profile.title}" has circular task dependencies.`;
+  return null;
 }
 
 /**
@@ -28,13 +43,8 @@ export function importEvents(text: string): Result<Event[], string> {
     return err(`That file is not a Hostwise export (${where}: ${issue?.message ?? "invalid"}).`);
   }
   for (const event of parsed.data.events) {
-    const ids = new Set(event.tasks.map((t) => t.id));
-    if (event.tasks.some((t) => t.dependsOn.some((d) => !ids.has(d)))) {
-      return err(`"${event.profile.title}" has a task that depends on a missing task.`);
-    }
-    if (detectCycle(event.tasks)) {
-      return err(`"${event.profile.title}" has circular task dependencies.`);
-    }
+    const problem = taskGraphProblem(event);
+    if (problem) return err(problem);
   }
   return ok(parsed.data.events);
 }

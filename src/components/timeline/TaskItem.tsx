@@ -1,17 +1,43 @@
 import { AlertTriangle, Clock, Lock, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { DelayDialog } from "./DelayDialog";
+import { TaskForm } from "./TaskForm";
 import { formatDate } from "../../lib/display";
 import { blockers, isAtRisk, isOverdue } from "../../lib/timeline";
 import { TaskStatus, type Event, type Task } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
-import { DelayDialog } from "./DelayDialog";
-import { TaskForm } from "./TaskForm";
 
 const STATUS_LABEL: Record<TaskStatus, string> = { todo: "To do", doing: "Doing", done: "Done" };
 
 type Props = { event: Event; task: Task; today: string };
+
+type BadgesProps = Props & { waitingOn: Task[] };
+
+/** Blocked, at-risk, overdue and delayed labels; renders nothing when none apply. */
+function TaskBadges({ event, task, today, waitingOn }: BadgesProps) {
+  return (
+    <div className="flex flex-wrap gap-2 empty:hidden">
+      {waitingOn.length > 0 && task.status !== "done" ? (
+        <Badge tone="warn" icon={Lock}>
+          Blocked by {waitingOn.map((t) => t.title).join(", ")}
+        </Badge>
+      ) : null}
+      {isAtRisk(task, event.profile.date) ? (
+        <Badge tone="danger" icon={AlertTriangle}>
+          At risk: due after the event
+        </Badge>
+      ) : null}
+      {isOverdue(task, today) ? (
+        <Badge tone="danger" icon={Clock}>
+          Overdue
+        </Badge>
+      ) : null}
+      {task.delayDays > 0 ? <Badge icon={Clock}>Delayed {task.delayDays} days</Badge> : null}
+    </div>
+  );
+}
 
 export function TaskItem({ event, task, today }: Props) {
   const updateTask = useEventStore((s) => s.updateTask);
@@ -86,24 +112,7 @@ export function TaskItem({ event, task, today }: Props) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 empty:hidden">
-        {waitingOn.length > 0 && task.status !== "done" ? (
-          <Badge tone="warn" icon={Lock}>
-            Blocked by {waitingOn.map((t) => t.title).join(", ")}
-          </Badge>
-        ) : null}
-        {isAtRisk(task, event.profile.date) ? (
-          <Badge tone="danger" icon={AlertTriangle}>
-            At risk: due after the event
-          </Badge>
-        ) : null}
-        {isOverdue(task, today) ? (
-          <Badge tone="danger" icon={Clock}>
-            Overdue
-          </Badge>
-        ) : null}
-        {task.delayDays > 0 ? <Badge icon={Clock}>Delayed {task.delayDays} days</Badge> : null}
-      </div>
+      <TaskBadges event={event} task={task} today={today} waitingOn={waitingOn} />
 
       {dialog === "delay" ? (
         <DelayDialog event={event} task={task} open onClose={() => setDialog(null)} />

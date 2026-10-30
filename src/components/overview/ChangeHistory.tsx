@@ -1,9 +1,9 @@
 import { History, Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Event } from "../../schemas/event";
 import { useCanUndo, useEventStore } from "../../store/useEventStore";
 import { Button, buttonClass } from "../ui/Button";
 import { toast } from "../ui/Toast";
+import type { Event } from "../../schemas/event";
 
 export function ChangeHistory({ event }: { event: Event }) {
   const canUndo = useCanUndo(event.id);

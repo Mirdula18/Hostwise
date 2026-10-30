@@ -1,9 +1,10 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
-import type { AITask } from "../schemas/ai";
-import type { Priority, Task } from "../schemas/event";
+import { BUCKET_DAYS, LIMITS } from "./constants";
 import { makeId, type IdGen } from "./id";
 import { priorityForCategory, priorityRank } from "./priorities";
 import { err, ok, type Result } from "./result";
+import type { AITask } from "../schemas/ai";
+import type { Priority, Task } from "../schemas/event";
 
 /** Dates are ISO `yyyy-MM-dd` strings, interpreted as local calendar days. */
 export function shiftDate(iso: string, days: number): string {
@@ -29,25 +30,28 @@ function graphOf(tasks: readonly Pick<Task, "id" | "dependsOn">[]): Graph {
   return new Map(tasks.map((t) => [t.id, t.dependsOn.filter((d) => ids.has(d))]));
 }
 
+const VISITING = 1;
+const VISITED = 2;
+
 /** Returns one cycle as a list of ids (first id repeated at the end), or null if acyclic. */
 export function detectCycle(tasks: readonly Pick<Task, "id" | "dependsOn">[]): string[] | null {
   const graph = graphOf(tasks);
-  const state = new Map<string, 1 | 2>();
+  const state = new Map<string, typeof VISITING | typeof VISITED>();
   const stack: string[] = [];
 
   const visit = (id: string): string[] | null => {
-    state.set(id, 1);
+    state.set(id, VISITING);
     stack.push(id);
     for (const dep of graph.get(id) ?? []) {
       const s = state.get(dep);
-      if (s === 1) return [...stack.slice(stack.indexOf(dep)), dep];
+      if (s === VISITING) return [...stack.slice(stack.indexOf(dep)), dep];
       if (s === undefined) {
         const found = visit(dep);
         if (found) return found;
       }
     }
     stack.pop();
-    state.set(id, 2);
+    state.set(id, VISITED);
     return null;
   };
 
@@ -126,6 +130,25 @@ export function transitiveDependents(tasks: readonly Task[], id: string): string
 
 type ToDatesResult = { tasks: Task[]; notes: string[] };
 
+/** Removes the closing edge of each cycle in place; returns one note per removed edge. */
+function breakCycles(tasks: Task[]): string[] {
+  const notes: string[] = [];
+  let cycle = detectCycle(tasks);
+  while (cycle) {
+    const [from, to] = cycle.slice(-CYCLE_EDGE);
+    const task = tasks.find((x) => x.id === from);
+    if (!task) break;
+    task.dependsOn = task.dependsOn.filter((d) => d !== to);
+    const toTitle = tasks.find((x) => x.id === to)?.title ?? "another task";
+    notes.push(`Removed a circular link: "${task.title}" no longer waits for "${toTitle}".`);
+    cycle = detectCycle(tasks);
+  }
+  return notes;
+}
+
+/** The last two ids of a detected cycle form the edge that closes it. */
+const CYCLE_EDGE = 2;
+
 /**
  * Converts AI tasks (offsets in days before the event, key-based deps) into dated tasks.
  * Unknown dependency keys are dropped; edges that would create a cycle are dropped
@@ -140,7 +163,6 @@ export function toDates(
   for (const t of aiTasks) {
     if (!idForKey.has(t.key)) idForKey.set(t.key, idGen("task"));
   }
-  const notes: string[] = [];
   const tasks: Task[] = [];
   const seenKeys = new Set<string>();
   for (const t of aiTasks) {
@@ -165,17 +187,7 @@ export function toDates(
     });
   }
 
-  let cycle = detectCycle(tasks);
-  while (cycle) {
-    const [from, to] = [cycle[cycle.length - 2], cycle[cycle.length - 1]];
-    const task = tasks.find((x) => x.id === from);
-    if (!task) break;
-    task.dependsOn = task.dependsOn.filter((d) => d !== to);
-    const toTitle = tasks.find((x) => x.id === to)?.title ?? "another task";
-    notes.push(`Removed a circular link: "${task.title}" no longer waits for "${toTitle}".`);
-    cycle = detectCycle(tasks);
-  }
-  return { tasks, notes };
+  return { tasks, notes: breakCycles(tasks) };
 }
 
 export function isBlocked(task: Task, tasks: readonly Task[]): boolean {
@@ -250,8 +262,8 @@ export function bucket(tasks: readonly Task[], today: string): Buckets {
     else {
       const d = daysBetween(today, t.dueDate);
       if (d < 0) out.overdue.push(t);
-      else if (d < 7) out.thisWeek.push(t);
-      else if (d < 21) out.nextTwoWeeks.push(t);
+      else if (d < BUCKET_DAYS.THIS_WEEK) out.thisWeek.push(t);
+      else if (d < BUCKET_DAYS.NEXT_TWO_WEEKS) out.nextTwoWeeks.push(t);
       else out.later.push(t);
     }
   }
@@ -288,7 +300,7 @@ export function todayTop3(
         a.rank - b.rank ||
         a.index - b.index,
     )
-    .slice(0, 3)
+    .slice(0, LIMITS.TODAY_TASKS)
     .map((x) => x.t);
 }
 

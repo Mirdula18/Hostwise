@@ -1,13 +1,13 @@
 import { AlertTriangle, Lightbulb } from "lucide-react";
 import { useMemo } from "react";
+import { ChangeHistory } from "./ChangeHistory";
 import { summary } from "../../lib/budget";
 import { displayAnswer } from "../../lib/intake";
 import { FIELD_SPECS, type IntakeField } from "../../lib/intakeFallback";
 import { format } from "../../lib/money";
-import type { Event } from "../../schemas/event";
 import { TodayCard } from "../timeline/TodayCard";
-import { ChangeHistory } from "./ChangeHistory";
 import { Badge } from "../ui/Badge";
+import type { Event } from "../../schemas/event";
 
 const PROFILE_ROWS: [IntakeField, string][] = [
   ["priorities", "Priorities"],

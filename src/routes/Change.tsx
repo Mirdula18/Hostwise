@@ -1,71 +1,36 @@
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import NotFound from "./NotFound";
 import { ChangeBox } from "../components/change/ChangeBox";
 import { DiffPreview } from "../components/change/DiffPreview";
-import { OptionCard } from "../components/change/OptionCard";
+import { StageView, type Stage } from "../components/change/StageView";
 import { AIErrorAlert } from "../components/ui/AIErrorAlert";
 import { LiveRegion } from "../components/ui/LiveRegion";
 import { PageHeading } from "../components/ui/PageHeading";
 import { toast } from "../components/ui/Toast";
 import { AIError, callAI } from "../lib/ai/client";
 import { debounce } from "../lib/ai/debounce";
-import { applyOption, computeImpact, describeChange, generateOptions } from "../lib/change";
-import { format } from "../lib/money";
-import { PRIORITY_LABELS } from "../lib/priorities";
-import { checkChange, diffEvents, mergeRanking, type RankedOption } from "../lib/ranking";
+import { parseChangeInput, rankOptionsInput } from "../lib/ai/inputs";
+import { applyOption, computeImpact, generateOptions } from "../lib/change";
+import { AI_DEBOUNCE_MS } from "../lib/constants";
+import { checkChange, diffEvents, mergeRanking } from "../lib/ranking";
 import { todayIso } from "../lib/timeline";
 import { RankResult } from "../schemas/ai";
-import { ChangeRequest, type Event, type Impact } from "../schemas/event";
+import { ChangeRequest, type Event, type Impact, type TradeOffOption } from "../schemas/event";
 import { useEvent, useEventStore } from "../store/useEventStore";
-import NotFound from "./NotFound";
 
-type Stage =
-  | { kind: "input" }
-  | { kind: "parsing" }
-  | { kind: "ranking"; impact: Impact }
-  | { kind: "options"; impact: Impact; options: RankedOption[]; ranked: boolean };
-
-function ImpactSummary({ event, impact }: { event: Event; impact: Impact }) {
-  const { currency, priorities } = event.profile;
-  const money = (n: number) => format(n, currency);
-  const request = impact.request;
-  return (
-    <section
-      aria-labelledby="impact-heading"
-      className="space-y-2 rounded-xl border border-edge bg-surface shadow-sm p-4"
-    >
-      <h2 id="impact-heading" className="text-xl font-bold">
-        Impact
-      </h2>
-      {request.kind !== "unclear" ? (
-        <p className="font-semibold">{describeChange(event, request)}</p>
-      ) : null}
-      {impact.gap < 0 ? (
-        <p>
-          This needs {money(impact.after.requiredSum)} but your budget is{" "}
-          {money(impact.after.total)}: a shortfall of <strong>{money(-impact.gap)}</strong>.
-        </p>
-      ) : impact.gap > 0 ? (
-        <p>
-          You now have <strong>{money(impact.gap)}</strong> more than the plan needs.
-        </p>
-      ) : (
-        <p>No money needs to move.</p>
-      )}
-      {impact.affectedCategories.length > 0 ? (
-        <p className="text-sm">Categories affected: {impact.affectedCategories.join(", ")}.</p>
-      ) : null}
-      {impact.affectedTaskIds.length > 0 ? (
-        <p className="text-sm">{impact.affectedTaskIds.length} task(s) affected.</p>
-      ) : null}
-      <p className="text-sm text-muted">
-        Options are weighed against your priorities:{" "}
-        {priorities.map((p, i) => `${i + 1}. ${PRIORITY_LABELS[p]}`).join(", ")}. Locked categories
-        are never cut.
-      </p>
-    </section>
-  );
+/** The AI ranking, or null so the options are shown unranked when the AI is unavailable. */
+async function rankOrNull(
+  event: Event,
+  impact: Impact,
+  options: TradeOffOption[],
+): Promise<RankResult | null> {
+  try {
+    return await callAI("rank_options", rankOptionsInput(event, impact, options), RankResult);
+  } catch {
+    return null;
+  }
 }
 
 export default function Change() {
@@ -107,29 +72,7 @@ export default function Change() {
       return;
     }
     setStage({ kind: "ranking", impact });
-    let ranking: RankResult | null = null;
-    try {
-      ranking = await callAI(
-        "rank_options",
-        {
-          profile: {
-            priorities: e.profile.priorities,
-            guestCount: e.profile.guestCount,
-            occasion: e.profile.occasion,
-          },
-          impact,
-          options,
-          categories: e.budget.map((l) => ({
-            category: l.category,
-            allocated: l.allocated,
-            locked: l.locked,
-          })),
-        },
-        RankResult,
-      );
-    } catch {
-      ranking = null;
-    }
+    const ranking = await rankOrNull(e, impact, options);
     setStage({
       kind: "options",
       impact,
@@ -151,18 +94,7 @@ export default function Change() {
         try {
           const request = await callAI(
             "parse_change",
-            {
-              text,
-              today,
-              eventDate: e.profile.date,
-              currency: e.profile.currency,
-              guestCount: e.profile.guestCount,
-              totalBudget: e.profile.totalBudget,
-              tasks: e.tasks
-                .filter((t) => t.status !== "done")
-                .slice(0, 60)
-                .map((t) => ({ id: t.id, title: t.title })),
-            },
+            parseChangeInput(e, text, today),
             ChangeRequest,
           );
           await runRef.current(request);
@@ -173,7 +105,7 @@ export default function Change() {
             text,
           });
         }
-      }, 500),
+      }, AI_DEBOUNCE_MS),
     [today],
   );
 
@@ -205,10 +137,6 @@ export default function Change() {
   };
 
   const busy = stage.kind === "parsing" || stage.kind === "ranking";
-  const guestRequest =
-    stage.kind === "options" && stage.impact.request.kind === "guests"
-      ? stage.impact.request.newCount
-      : undefined;
 
   return (
     <div className="space-y-6">
@@ -246,42 +174,7 @@ export default function Change() {
 
       <LiveRegion busy={busy} className="space-y-4">
         {notice ? <p className="rounded-lg border border-warn p-3 font-medium">{notice}</p> : null}
-        {stage.kind === "parsing" ? <p>Reading your change…</p> : null}
-        {stage.kind === "ranking" ? (
-          <>
-            <ImpactSummary event={event} impact={stage.impact} />
-            <p>Weighing the options against your priorities…</p>
-          </>
-        ) : null}
-        {stage.kind === "options" ? (
-          <>
-            <ImpactSummary event={event} impact={stage.impact} />
-            {!stage.ranked && stage.options.length > 1 ? (
-              <p className="text-sm text-muted">
-                The assistant couldn't rank these right now, so they are listed in Hostwise's order.
-                Every option still balances your budget exactly.
-              </p>
-            ) : null}
-            <section aria-labelledby="options-heading" className="space-y-2">
-              <h2 id="options-heading" className="text-xl font-bold">
-                Your options
-              </h2>
-              <ul className="grid gap-3 md:grid-cols-2">
-                {stage.options.map((o) => (
-                  <OptionCard
-                    key={o.id}
-                    event={event}
-                    option={o}
-                    newGuestCount={guestRequest}
-                    ranked={stage.ranked}
-                    selected={o.id === selectedId}
-                    onSelect={() => setSelectedId(o.id)}
-                  />
-                ))}
-              </ul>
-            </section>
-          </>
-        ) : null}
+        <StageView event={event} stage={stage} selectedId={selectedId} onSelect={setSelectedId} />
       </LiveRegion>
 
       {preview ? (

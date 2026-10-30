@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { parseMoney } from "../../lib/money";
-import type { Vendor } from "../../schemas/event";
+import { TEXT } from "../../lib/constants";
+import { quoteInput } from "../../lib/forms";
 import { useEventStore } from "../../store/useEventStore";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { Field, inputClass } from "../ui/Field";
+import type { Vendor } from "../../schemas/event";
 
 type Props = {
   eventId: string;
@@ -26,23 +27,12 @@ export function QuoteForm({ eventId, vendor, currency, open, onClose }: Props) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const minor = parseMoney(amount);
-    const dep = deposit.trim() === "" ? undefined : parseMoney(deposit);
-    if (minor === null || minor <= 0) {
-      setError("Enter the quoted amount, above 0.");
+    const input = quoteInput({ amount, includes, deposit, validUntil, cancellation });
+    if (!input.ok) {
+      setError(input.error);
       return;
     }
-    if (dep === null) {
-      setError("Enter the deposit as a number, or leave it blank.");
-      return;
-    }
-    const r = addQuote(eventId, vendor.id, {
-      amount: minor,
-      includes: includes.trim().slice(0, 500),
-      ...(dep !== undefined ? { deposit: dep } : {}),
-      ...(validUntil ? { validUntil } : {}),
-      ...(cancellation.trim() ? { cancellation: cancellation.trim().slice(0, 300) } : {}),
-    });
+    const r = addQuote(eventId, vendor.id, input.value);
     if (!r.ok) {
       setError("That quote could not be saved.");
       return;
@@ -77,7 +67,7 @@ export function QuoteForm({ eventId, vendor, currency, open, onClose }: Props) {
             <textarea
               {...p}
               rows={2}
-              maxLength={500}
+              maxLength={TEXT.CHANGE}
               className={inputClass}
               value={includes}
               onChange={(e) => setIncludes(e.target.value)}
@@ -113,7 +103,7 @@ export function QuoteForm({ eventId, vendor, currency, open, onClose }: Props) {
           {(p) => (
             <input
               {...p}
-              maxLength={300}
+              maxLength={TEXT.NOTE}
               className={inputClass}
               value={cancellation}
               onChange={(e) => setCancellation(e.target.value)}

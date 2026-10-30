@@ -1,36 +1,23 @@
 import { AlertTriangle, Lock, LockOpen, Pencil, Users } from "lucide-react";
 import { useState } from "react";
+import { EditLineDialog } from "./EditLineDialog";
+import { SourceBadge } from "./SourceBadge";
 import { lineStatus } from "../../lib/budget";
 import { format } from "../../lib/money";
-import type { BudgetLine } from "../../schemas/event";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
-import { EditLineDialog } from "./EditLineDialog";
-import { SourceBadge } from "./SourceBadge";
+import type { BudgetLine } from "../../schemas/event";
 
 type Props = { eventId: string; line: BudgetLine; currency: string; isPriority: boolean };
 
-export function CategoryCard({ eventId, line, currency, isPriority }: Props) {
-  const lockLine = useEventStore((s) => s.lockLine);
-  const [editing, setEditing] = useState(false);
+type AmountsProps = { line: BudgetLine; money: (n: number) => string };
+
+/** Allocated, committed, spent and remaining, with a usage bar. */
+function LineAmounts({ line, money }: AmountsProps) {
   const s = lineStatus(line);
-  const money = (n: number) => format(n, currency);
-  const headingId = `line-${line.id}`;
-
   return (
-    <li
-      aria-labelledby={headingId}
-      className={`space-y-2 rounded-xl border bg-surface p-4 shadow-sm ${s.over ? "border-2 border-danger" : "border-edge"}`}
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 id={headingId} className="mr-auto text-lg font-bold">
-          {line.category}
-        </h3>
-        {isPriority ? <Badge tone="brand">Your priority</Badge> : null}
-        <SourceBadge source={line.source} />
-      </div>
-
+    <>
       <dl className="grid grid-cols-2 gap-x-2 text-sm sm:grid-cols-4">
         <div>
           <dt className="text-muted">Allocated</dt>
@@ -61,6 +48,31 @@ export function CategoryCard({ eventId, line, currency, isPriority }: Props) {
       <p className="text-sm text-muted">
         {money(s.used)} of {money(line.allocated)} used, {s.percentUsed}%
       </p>
+    </>
+  );
+}
+
+export function CategoryCard({ eventId, line, currency, isPriority }: Props) {
+  const lockLine = useEventStore((s) => s.lockLine);
+  const [editing, setEditing] = useState(false);
+  const s = lineStatus(line);
+  const money = (n: number) => format(n, currency);
+  const headingId = `line-${line.id}`;
+
+  return (
+    <li
+      aria-labelledby={headingId}
+      className={`space-y-2 rounded-xl border bg-surface p-4 shadow-sm ${s.over ? "border-2 border-danger" : "border-edge"}`}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 id={headingId} className="mr-auto text-lg font-bold">
+          {line.category}
+        </h3>
+        {isPriority ? <Badge tone="brand">Your priority</Badge> : null}
+        <SourceBadge source={line.source} />
+      </div>
+
+      <LineAmounts line={line} money={money} />
 
       <div className="flex flex-wrap items-center gap-2">
         {s.over ? (

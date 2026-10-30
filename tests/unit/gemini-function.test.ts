@@ -190,7 +190,7 @@ describe("callGemini", () => {
       {},
       fetchImpl,
     );
-    expect(bad).toEqual({ ok: false, failure: { status: 503, code: "not_configured" } });
+    expect(bad).toEqual({ ok: false, error: { status: 503, code: "not_configured" } });
   });
 
   it("reports empty or non-JSON model output as bad_output", async () => {
@@ -200,7 +200,7 @@ describe("callGemini", () => {
       {},
       vi.fn(async () => new Response("{}")),
     );
-    expect(empty).toEqual({ ok: false, failure: { status: 502, code: "bad_output" } });
+    expect(empty).toEqual({ ok: false, error: { status: 502, code: "bad_output" } });
     const text = new Response(
       JSON.stringify({ candidates: [{ content: { parts: [{ text: "not json" }] } }] }),
     );
@@ -210,7 +210,7 @@ describe("callGemini", () => {
       {},
       vi.fn(async () => text),
     );
-    expect(notJson).toEqual({ ok: false, failure: { status: 502, code: "bad_output" } });
+    expect(notJson).toEqual({ ok: false, error: { status: 502, code: "bad_output" } });
   });
 
   it("maps network failures to upstream_error", async () => {
@@ -220,7 +220,7 @@ describe("callGemini", () => {
       {},
       vi.fn(async () => Promise.reject(new TypeError("down"))),
     );
-    expect(r).toEqual({ ok: false, failure: { status: 502, code: "upstream_error" } });
+    expect(r).toEqual({ ok: false, error: { status: 502, code: "upstream_error" } });
   });
 
   it("aborts after the timeout and returns 504", async () => {
@@ -233,7 +233,7 @@ describe("callGemini", () => {
         }),
     );
     const r = await callGemini(env, "plan", {}, hang, 10);
-    expect(r).toEqual({ ok: false, failure: { status: 504, code: "timeout" } });
+    expect(r).toEqual({ ok: false, error: { status: 504, code: "timeout" } });
   });
 });
 

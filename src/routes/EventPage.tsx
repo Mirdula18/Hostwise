@@ -1,20 +1,20 @@
 import { Download, Printer, Shuffle } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import NotFound from "./NotFound";
+import { BudgetBoard } from "../components/budget/BudgetBoard";
+import { EventStats } from "../components/overview/EventStats";
+import { Overview } from "../components/overview/Overview";
+import { RunOfShow } from "../components/overview/RunOfShow";
+import { TaskList } from "../components/timeline/TaskList";
 import { Button, buttonClass } from "../components/ui/Button";
 import { downloadText } from "../components/ui/download";
-import { EventStats } from "../components/overview/EventStats";
-import { RunOfShow } from "../components/overview/RunOfShow";
-import { exportEvents } from "../lib/io";
-import { BudgetBoard } from "../components/budget/BudgetBoard";
-import { Overview } from "../components/overview/Overview";
-import { TaskList } from "../components/timeline/TaskList";
 import { PageHeading } from "../components/ui/PageHeading";
 import { TabPanel, Tabs, type TabItem } from "../components/ui/Tabs";
 import { VendorList } from "../components/vendors/VendorList";
 import { OCCASION_LABELS } from "../lib/intakeFallback";
+import { exportEvents } from "../lib/io";
 import { todayIso } from "../lib/timeline";
 import { useEvent } from "../store/useEventStore";
-import NotFound from "./NotFound";
 
 type TabKey = "overview" | "budget" | "timeline" | "vendors";
 

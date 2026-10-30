@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react";
-import type { ReactNode } from "react";
 import { Button } from "./Button";
+import type { ReactNode } from "react";
 
 type Props = { message: string; onRetry: () => void; children?: ReactNode };
 

@@ -20,12 +20,27 @@ type Props = {
   children: (props: ControlProps) => ReactNode;
 };
 
+/** ARIA wiring for the control: only the attributes that apply are present. */
+function controlProps(
+  id: string,
+  describedByIds: (string | undefined)[],
+  invalid: boolean,
+  required: boolean | undefined,
+): ControlProps {
+  const describedBy = describedByIds.filter(Boolean).join(" ");
+  return {
+    id,
+    ...(describedBy ? { "aria-describedby": describedBy } : {}),
+    ...(invalid ? { "aria-invalid": true as const } : {}),
+    ...(required ? { required: true } : {}),
+  };
+}
+
 /** A visible label, optional hint and inline error, all linked to the control. */
 export function Field({ label, hint, error, required, className = "", children }: Props) {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
   return (
     <div className={`space-y-1 ${className}`}>
       <label htmlFor={id} className="block text-sm font-semibold">
@@ -37,12 +52,7 @@ export function Field({ label, hint, error, required, className = "", children }
           {hint}
         </p>
       ) : null}
-      {children({
-        id,
-        ...(describedBy ? { "aria-describedby": describedBy } : {}),
-        ...(error ? { "aria-invalid": true as const } : {}),
-        ...(required ? { required: true } : {}),
-      })}
+      {children(controlProps(id, [hintId, errorId], Boolean(error), required))}
       {error ? (
         <p id={errorId} className="text-sm font-medium text-danger">
           {error}
