@@ -1,14 +1,13 @@
 import {
   fromPercents,
-  lineStatus,
   normalisePercents,
   rebalance,
   scaleForGuests,
   setLineAmount,
   setSpent,
-  summary,
   toggleLock,
 } from "../../src/lib/budget";
+import { lineStatus, summary } from "../../src/lib/budgetStatus";
 import { counterIds } from "../../src/lib/id";
 import { sum } from "../../src/lib/money";
 import type { Priority } from "../../src/schemas/event";

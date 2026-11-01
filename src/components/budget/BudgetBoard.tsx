@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useMemo } from "react";
 import { CategoryCard } from "./CategoryCard";
-import { summary } from "../../lib/budget";
+import { summary } from "../../lib/budgetStatus";
 import { shares } from "../../lib/display";
 import { format } from "../../lib/money";
 import { LiveRegion } from "../ui/LiveRegion";

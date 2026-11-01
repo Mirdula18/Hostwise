@@ -1,26 +1,18 @@
 import { counterIds } from "../../src/lib/id";
+import { addTask, deleteTask, updateTask } from "../../src/lib/taskEdit";
 import {
-  addTask,
   blockers,
   bucket,
-  CycleError,
-  daysBetween,
-  deleteTask,
-  detectCycle,
   isAtRisk,
   isBlocked,
-  isFutureDate,
   isOverdue,
   shiftAll,
-  shiftDate,
   shiftWithDependents,
   toDates,
-  todayIso,
   todayTop3,
-  topoSort,
-  transitiveDependents,
-  updateTask,
 } from "../../src/lib/timeline";
+import { CycleError, detectCycle, topoSort, transitiveDependents } from "../../src/lib/taskGraph";
+import { daysBetween, isFutureDate, shiftDate, todayIso } from "../../src/lib/dates";
 import { task } from "./fixtures";
 
 const TODAY = "2026-11-01";

@@ -12,8 +12,8 @@ type ControlProps = {
 
 type Props = {
   label: string;
-  hint?: string;
-  error?: string;
+  hint?: string | undefined;
+  error?: string | undefined;
   required?: boolean;
   className?: string;
   /** Renders the control with the ids and ARIA wiring it needs. */

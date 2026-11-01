@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { axe } from "vitest-axe";
-import { SAMPLE_PLAN } from "../../src/lib/sample";
+import { SAMPLE_PLAN } from "../../src/lib/samplePlan";
 import Intake from "../../src/routes/Intake";
 import { useEventStore } from "../../src/store/useEventStore";
 import { mockAI } from "./aiMock";

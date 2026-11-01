@@ -12,9 +12,9 @@ import { downloadText } from "../components/ui/download";
 import { PageHeading } from "../components/ui/PageHeading";
 import { TabPanel, Tabs, type TabItem } from "../components/ui/Tabs";
 import { VendorList } from "../components/vendors/VendorList";
+import { todayIso } from "../lib/dates";
 import { OCCASION_LABELS } from "../lib/intakeFallback";
 import { exportEvents } from "../lib/io";
-import { todayIso } from "../lib/timeline";
 import { useEvent } from "../store/useEventStore";
 
 type TabKey = "overview" | "budget" | "timeline" | "vendors";

@@ -1,6 +1,6 @@
 import { RankControl } from "./RankControl";
+import { shiftDate } from "../../lib/dates";
 import { PRIORITY_LABELS } from "../../lib/priorities";
-import { shiftDate } from "../../lib/timeline";
 import { Field, inputClass } from "../ui/Field";
 import type { IntakeQuestion, Raw } from "../../lib/intake";
 
@@ -24,7 +24,7 @@ type ControlProps = {
   value: Raw;
   onChange: (value: Raw) => void;
   today: string;
-  currency?: string;
+  currency?: string | undefined;
   required: boolean;
   error: string | null;
 };

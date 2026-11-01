@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { format, fromMinor, parseMoney } from "../../lib/money";
-import { useEventStore, type EditMode } from "../../store/useEventStore";
+import { type EditMode } from "../../store/kit";
+import { useEventStore } from "../../store/useEventStore";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { Field, inputClass } from "../ui/Field";

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { TEXT } from "../../lib/constants";
 import { taskInput, type TaskFields } from "../../lib/forms";
-import { transitiveDependents } from "../../lib/timeline";
+import { transitiveDependents } from "../../lib/taskGraph";
 import { useEventStore } from "../../store/useEventStore";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";

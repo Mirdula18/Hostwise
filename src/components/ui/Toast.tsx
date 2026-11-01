@@ -6,7 +6,7 @@ import { LIMITS } from "../../lib/constants";
 export const TOAST_MS = 10_000;
 
 type ToastAction = { label: string; onClick: () => void };
-type ToastItem = { id: number; message: string; action?: ToastAction };
+type ToastItem = { id: number; message: string; action?: ToastAction | undefined };
 
 type ToastState = {
   toasts: ToastItem[];

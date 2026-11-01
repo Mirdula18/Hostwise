@@ -47,7 +47,7 @@ const sharedCache = new LRUCache<unknown>(CACHE_SIZE);
 type CallOptions = {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
   cache?: LRUCache<unknown> | null;
 };
 

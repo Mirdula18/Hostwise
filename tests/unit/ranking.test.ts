@@ -1,4 +1,6 @@
-import { applyOption, computeImpact, generateOptions } from "../../src/lib/change";
+import { applyOption } from "../../src/lib/change";
+import { computeImpact } from "../../src/lib/impact";
+import { generateOptions } from "../../src/lib/tradeOffs";
 import { checkChange, diffEvents, mergeRanking } from "../../src/lib/ranking";
 import { event } from "./fixtures";
 

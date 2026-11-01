@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { lineStatus } from "../../lib/budget";
+import { lineStatus } from "../../lib/budgetStatus";
 import { displayAnswer } from "../../lib/intake";
 import { format } from "../../lib/money";
-import { topoSort } from "../../lib/timeline";
+import { topoSort } from "../../lib/taskGraph";
 import type { Event } from "../../schemas/event";
 
 const STATUS = { todo: "To do", doing: "Doing", done: "Done" } as const;

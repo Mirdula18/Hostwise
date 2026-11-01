@@ -1,27 +1,27 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ReactNode } from "react";
 import { Button } from "./Button";
+import { paths } from "../../routes/paths";
 
 type Props = { children: ReactNode; resetKey?: string };
 type State = { failed: boolean };
 
-/** Keeps one broken route from taking down the whole app. */
+/**
+ * Keeps one broken route from taking down the whole app. Errors are shown to the user;
+ * nothing is logged or sent anywhere.
+ */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { failed: false };
+  override state: State = { failed: false };
 
   static getDerivedStateFromError(): State {
     return { failed: true };
   }
 
-  componentDidCatch(_error: Error, _info: ErrorInfo): void {
-    // Errors are shown to the user; nothing is logged or sent anywhere.
-  }
-
-  componentDidUpdate(prev: Props): void {
+  override componentDidUpdate(prev: Props): void {
     if (this.state.failed && prev.resetKey !== this.props.resetKey)
       this.setState({ failed: false });
   }
 
-  render() {
+  override render() {
     if (!this.state.failed) return this.props.children;
     return (
       <div role="alert" className="space-y-3 rounded-xl border border-danger bg-surface p-4">
@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <Button onClick={() => this.setState({ failed: false })}>Try again</Button>
           <a
             className="inline-flex min-h-11 items-center px-2 font-semibold text-brand underline"
-            href="/"
+            href={paths.home}
           >
             Go to my events
           </a>

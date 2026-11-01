@@ -1,7 +1,7 @@
 import { KIB } from "./constants";
 import { err, ok, type Result } from "./result";
+import { detectCycle } from "./taskGraph";
 import { nonEmpty } from "./text";
-import { detectCycle } from "./timeline";
 import { StoreFile, type Event } from "../schemas/event";
 
 const MAX_IMPORT_MIB = 2;

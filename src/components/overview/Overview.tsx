@@ -1,7 +1,7 @@
 import { AlertTriangle, Lightbulb } from "lucide-react";
 import { useMemo } from "react";
 import { ChangeHistory } from "./ChangeHistory";
-import { summary } from "../../lib/budget";
+import { summary } from "../../lib/budgetStatus";
 import { displayAnswer } from "../../lib/intake";
 import { FIELD_SPECS, type IntakeField } from "../../lib/intakeFallback";
 import { format } from "../../lib/money";

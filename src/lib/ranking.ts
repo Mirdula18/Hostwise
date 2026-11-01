@@ -1,7 +1,7 @@
 import { validateCustomOption } from "./change";
+import { isFutureDate } from "./dates";
 import { format } from "./money";
 import { err, ok, type Result } from "./result";
-import { isFutureDate } from "./timeline";
 import type { RankResult } from "../schemas/ai";
 import type {
   ActionableChange,

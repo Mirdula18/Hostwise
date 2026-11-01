@@ -1,6 +1,6 @@
 import { CalendarDays, ListChecks, Users, Wallet } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
-import { summary } from "../../lib/budget";
+import { summary } from "../../lib/budgetStatus";
 import { countdown, formatDate, taskProgress } from "../../lib/display";
 import { format } from "../../lib/money";
 import type { Event } from "../../schemas/event";

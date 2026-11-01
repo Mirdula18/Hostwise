@@ -22,9 +22,9 @@ const CONTROL_LABELS: Record<IntakeField, string> = {
 
 type Props = {
   question: IntakeQuestion;
-  initial?: Raw;
+  initial?: Raw | undefined;
   today: string;
-  currency?: string;
+  currency?: string | undefined;
   error: string | null;
   canGoBack: boolean;
   onSubmit: (raw: Raw) => void;

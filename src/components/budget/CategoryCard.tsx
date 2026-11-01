@@ -2,7 +2,7 @@ import { AlertTriangle, Lock, LockOpen, Pencil, Users } from "lucide-react";
 import { useState } from "react";
 import { EditLineDialog } from "./EditLineDialog";
 import { SourceBadge } from "./SourceBadge";
-import { lineStatus } from "../../lib/budget";
+import { lineStatus } from "../../lib/budgetStatus";
 import { format } from "../../lib/money";
 import { useEventStore } from "../../store/useEventStore";
 import { Badge } from "../ui/Badge";

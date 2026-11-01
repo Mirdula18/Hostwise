@@ -9,7 +9,7 @@ import type { Event } from "../../schemas/event";
 type Props = {
   event: Event;
   option: RankedOption;
-  newGuestCount?: number;
+  newGuestCount?: number | undefined;
   selected: boolean;
   ranked: boolean;
   onSelect: () => void;
@@ -46,7 +46,11 @@ function OptionBadges({ option, ranked, top }: BadgesProps) {
   );
 }
 
-type ChangesProps = { option: RankedOption; currency: string; newGuestCount?: number };
+type ChangesProps = {
+  option: RankedOption;
+  currency: string;
+  newGuestCount?: number | undefined;
+};
 
 /** The exact category, budget and guest changes this option makes. */
 function OptionChanges({ option, currency, newGuestCount }: ChangesProps) {

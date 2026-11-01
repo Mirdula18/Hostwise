@@ -1,4 +1,4 @@
-import { describeChange } from "../../lib/change";
+import { describeChange } from "../../lib/impact";
 import { format } from "../../lib/money";
 import { PRIORITY_LABELS } from "../../lib/priorities";
 import type { Event, Impact } from "../../schemas/event";

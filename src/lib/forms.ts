@@ -2,7 +2,7 @@ import { ISO_DATE, LIMITS, TEXT } from "./constants";
 import { parseMoney } from "./money";
 import { err, ok, type Result } from "./result";
 import { clip, optionalText } from "./text";
-import type { TaskInput } from "./timeline";
+import type { TaskInput } from "./taskEdit";
 import type { QuoteInput, VendorInput } from "./vendors";
 import type { ActionableChange, VendorStatus } from "../schemas/event";
 

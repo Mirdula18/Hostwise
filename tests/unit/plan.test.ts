@@ -1,7 +1,8 @@
 import { counterIds } from "../../src/lib/id";
 import { planToEvent } from "../../src/lib/plan";
-import { createSampleEvent, SAMPLE_PLAN, sampleProfile } from "../../src/lib/sample";
-import { detectCycle } from "../../src/lib/timeline";
+import { createSampleEvent, sampleProfile } from "../../src/lib/sample";
+import { SAMPLE_PLAN } from "../../src/lib/samplePlan";
+import { detectCycle } from "../../src/lib/taskGraph";
 import { AIPlan } from "../../src/schemas/ai";
 import { Event } from "../../src/schemas/event";
 import { allocatedSum } from "./fixtures";

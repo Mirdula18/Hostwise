@@ -1,7 +1,9 @@
-import { computeImpact, generateOptions } from "../../src/lib/change";
+import { computeImpact } from "../../src/lib/impact";
+import { generateOptions } from "../../src/lib/tradeOffs";
 import { createSampleEvent } from "../../src/lib/sample";
 import { migrate, STORE_KEY } from "../../src/store/migrations";
-import { UNDO_LIMIT, useEventStore } from "../../src/store/useEventStore";
+import { UNDO_LIMIT } from "../../src/store/kit";
+import { useEventStore } from "../../src/store/useEventStore";
 import { event } from "./fixtures";
 import { z } from "zod";
 import { parseJson } from "../../src/lib/json";

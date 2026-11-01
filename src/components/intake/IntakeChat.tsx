@@ -5,6 +5,7 @@ import { PlanFailed } from "./PlanFailed";
 import { ProgressBar } from "./ProgressBar";
 import { QuestionStep } from "./QuestionStep";
 import { AIError, callAI } from "../../lib/ai/client";
+import { todayIso } from "../../lib/dates";
 import {
   fallbackQuestion,
   finalizeProfile,
@@ -19,7 +20,6 @@ import {
 import { MAX_QUESTIONS, type IntakeAnswers } from "../../lib/intakeFallback";
 import { planToEvent } from "../../lib/plan";
 import { starterPlan } from "../../lib/starterPlan";
-import { todayIso } from "../../lib/timeline";
 import { paths } from "../../routes/paths";
 import { AIPlan, NextQuestion } from "../../schemas/ai";
 import { useEventStore } from "../../store/useEventStore";

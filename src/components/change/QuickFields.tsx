@@ -1,6 +1,6 @@
 import { LIMITS } from "../../lib/constants";
+import { shiftDate } from "../../lib/dates";
 import { format } from "../../lib/money";
-import { shiftDate } from "../../lib/timeline";
 import { Field, inputClass } from "../ui/Field";
 import type { QuickChangeKind } from "../../lib/forms";
 import type { Event } from "../../schemas/event";

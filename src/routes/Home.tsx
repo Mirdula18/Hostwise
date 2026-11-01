@@ -7,8 +7,8 @@ import { EventCard } from "../components/home/EventCard";
 import { Button, buttonClass } from "../components/ui/Button";
 import { Dialog } from "../components/ui/Dialog";
 import { PageHeading } from "../components/ui/PageHeading";
+import { todayIso } from "../lib/dates";
 import { createSampleEvent } from "../lib/sample";
-import { todayIso } from "../lib/timeline";
 import { useEventList, useEventStore } from "../store/useEventStore";
 import type { Event } from "../schemas/event";
 

@@ -1,4 +1,5 @@
 import { ISO_DATE, LIMITS, TEXT } from "./constants";
+import { isFutureDate } from "./dates";
 import {
   CURRENCIES,
   FIELD_SPECS,
@@ -13,7 +14,6 @@ import { format, fromMinor, toMinor } from "./money";
 import { PRIORITY_LABELS } from "./priorities";
 import { err, ok, type Result } from "./result";
 import { nonEmpty } from "./text";
-import { isFutureDate } from "./timeline";
 import { AgeGroup, EventProfile, Occasion, Priority, Setting } from "../schemas/event";
 import type { NextQuestion } from "../schemas/ai";
 

@@ -1,5 +1,6 @@
 import { parseChangeInput, rankOptionsInput } from "../../src/lib/ai/inputs";
-import { computeImpact, generateOptions } from "../../src/lib/change";
+import { computeImpact } from "../../src/lib/impact";
+import { generateOptions } from "../../src/lib/tradeOffs";
 import { LIMITS } from "../../src/lib/constants";
 import { counterIds } from "../../src/lib/id";
 import { createSampleEvent } from "../../src/lib/sample";

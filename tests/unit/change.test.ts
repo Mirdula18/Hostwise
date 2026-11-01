@@ -1,11 +1,6 @@
-import {
-  applyOption,
-  baseLines,
-  computeImpact,
-  describeChange,
-  generateOptions,
-  validateCustomOption,
-} from "../../src/lib/change";
+import { applyOption, validateCustomOption } from "../../src/lib/change";
+import { baseLines, computeImpact, describeChange } from "../../src/lib/impact";
+import { generateOptions } from "../../src/lib/tradeOffs";
 import type { ActionableChange, Event, TradeOffOption } from "../../src/schemas/event";
 import { allocatedSum, event } from "./fixtures";
 import { must } from "../must";
