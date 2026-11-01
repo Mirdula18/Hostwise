@@ -1,33 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-const fixture = (task: string) =>
-  readFileSync(join(process.cwd(), "tests", "fixtures", "ai", `${task}.json`), "utf8");
-
-/** Every /api/gemini call is answered from a fixture; the real API is never reached. */
-async function interceptAI(page: Page) {
-  const tasks: string[] = [];
-  await page.route("**/api/gemini", async (route) => {
-    const { task } = route.request().postDataJSON() as { task: string };
-    tasks.push(task);
-    await route.fulfill({ status: 200, contentType: "application/json", body: fixture(task) });
-  });
-  return tasks;
-}
-
-async function expectNoAxeViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
-}
-
-async function expectNoHorizontalScroll(page: Page) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-}
+import { expect, test } from "@playwright/test";
+import { expectNoAxeViolations, expectNoHorizontalScroll, interceptAI } from "./helpers";
 
 test("headline journey: sample → budget edit → add 20 guests → apply → undo → delay", async ({
   page,

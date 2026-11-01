@@ -22,7 +22,7 @@ This is a hackathon submission scored on: **Code Quality, Security, Efficiency, 
 | App | Vite, React 18, TypeScript (strict), Tailwind CSS, Zustand (with `persist` to localStorage), Zod, React Router, date-fns |
 | AI | Gemini REST API, called **only** from the Cloudflare Pages Function `functions/api/gemini.ts` |
 | Hosting | Cloudflare Pages (static `dist/`) plus Pages Functions |
-| Tests | Vitest, @testing-library/react, vitest-axe, Playwright (1 smoke spec) |
+| Tests | Vitest, @testing-library/react, vitest-axe, Playwright (smoke + journey specs, axe WCAG 2.2 AA) |
 | Lint | ESLint (typescript-eslint, react-hooks, jsx-a11y, import-x, jsdoc), Prettier, knip |
 
 ## Commands
