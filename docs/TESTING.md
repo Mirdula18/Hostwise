@@ -3,7 +3,10 @@
 ## 1. Strategy
 | Layer | Tool | Target |
 |---|---|---|
-| Pure logic (`src/lib`) and proxy (`functions/`) | Vitest | ≥ 90% lines, branches and functions; all edge cases |
+| Pure logic (`src/lib`) and proxy (`functions/`) | Vitest | ≥ 98% lines and functions, ≥ 92% branches; all edge cases |
+| Invariants | Vitest (seeded property tests) | 300 generated cases per invariant: money balances, locks respected, dependency order, delay ripple |
+| Performance | Vitest | Change cycle < 20 ms and timeline < 10 ms for 100 guests / 15 categories / 60 tasks |
+| Whole app incl. UI | Vitest + Testing Library | ≥ 95% lines and functions, ≥ 90% branches |
 | AI client and proxy | Vitest with mocked `fetch` | All success and failure paths |
 | Components | Testing Library + vitest-axe | Behaviour plus zero axe violations |
 | End to end | Playwright (1 smoke spec) | Headline journey; AI routes intercepted |

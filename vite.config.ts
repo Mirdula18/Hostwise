@@ -19,11 +19,18 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "text", "html"],
-      include: ["src/lib/**/*.ts", "functions/**/*.ts", "src/store/**/*.ts"],
+      // Everything that ships: logic, store, components, routes and the proxy.
+      include: ["src/**/*.{ts,tsx}", "functions/**/*.ts"],
+      exclude: ["src/main.tsx"],
       thresholds: {
-        // Pure logic and the proxy: at least 90% on every measure.
-        "src/lib/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
-        "functions/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
+        // Whole app, including UI.
+        lines: 95,
+        functions: 95,
+        branches: 90,
+        statements: 95,
+        // Pure logic and the proxy are held to a higher bar.
+        "src/lib/**": { lines: 98, functions: 98, branches: 92, statements: 98 },
+        "functions/**": { lines: 98, functions: 98, branches: 92, statements: 98 },
       },
     },
   },

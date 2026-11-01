@@ -175,6 +175,16 @@ describe("scaleForGuests", () => {
     expect(scaleForGuests(base, 60, 60)).toEqual(base);
   });
 
+  it("never scales a line below what is committed or spent", () => {
+    const lines = [
+      line({ id: "food", allocated: 40_000, committed: 30_000, perGuest: true }),
+      line({ id: "favours", allocated: 10_000, spent: 9_000, perGuest: true }),
+      line({ id: "comfort", allocated: 10_000, committed: 1_000, perGuest: true }),
+    ];
+    const half = scaleForGuests(lines, 60, 30);
+    expect(half.map((l) => l.allocated)).toEqual([30_000, 9_000, 5_000]);
+  });
+
   it("works when scaling down to one guest", () => {
     const one = scaleForGuests(base, 60, 1);
     expect(one.find((l) => l.id === "food")?.allocated).toBe(667);

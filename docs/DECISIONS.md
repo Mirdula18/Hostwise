@@ -57,6 +57,11 @@ Choices made where the spec was silent or ambiguous. Newest last.
 | 51 | QA | The proxy's `callGemini` and request parsing return `Result` like the rest of the lib, instead of a separate `{ ok, failure }` shape. | One error-handling pattern across the codebase. |
 | 52 | QA | `knip` runs in `npm run check`; `eslint-plugin-jsdoc` requires JSDoc on every export in `src/lib` and `functions/`. | Unused code and undocumented APIs fail the build instead of relying on review. |
 | 53 | QA | Coverage gates raised from 80% lines to 90% lines, branches and functions on `src/lib/**` and `functions/**`. | Measured coverage was already above 94%; the gate now protects it. |
+| 54 | QA | Lint is type-aware (`strictTypeChecked`, `stylisticTypeChecked`) and production code may not use `as` casts; JSON from the network or storage is validated with Zod instead. | The compiler, not the developer, vouches for every type. |
+| 55 | QA | `exactOptionalPropertyTypes`, `noImplicitReturns` and `noImplicitOverride` are on. | Optional props must say when `undefined` is allowed; no silent fall-through returns. |
+| 56 | QA | No source file exceeds 250 lines: timeline, change engine, budget, sample data and store are split into cohesive modules. | Each file has one job and can be read in one sitting. |
+| 57 | Fix | `scaleForGuests` never takes a line below what is committed or spent. Found by the new property tests: with an accepted quote and fewer guests, every trade-off option failed validation. | An accepted quote does not shrink because fewer guests are coming. |
+| 58 | QA | Property tests (seeded generator, 300 cases per invariant) and performance budgets (100 guests, 15 categories, 60 tasks) run with the unit tests. Coverage is measured on the whole app with a gate. | Invariants are checked far beyond hand-written examples; regressions in speed fail the build. |
 
 ## Open issues
 1. **Live Gemini not exercised.** No API key was used during the build, so every AI path is tested against mocks and fixtures only. After the first deploy, run one intake and one "add 20 guests" change to confirm the live model accepts the `responseSchema` format in `prompts.ts`. Every failure path falls back gracefully (static questions, starter plan, quick forms, unranked options).

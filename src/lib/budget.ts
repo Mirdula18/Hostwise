@@ -179,7 +179,8 @@ function sourceAfterEdit(line: BudgetLine): BudgetLine["source"] {
 
 /**
  * Scales per-guest lines by newCount / oldCount. Fixed lines are untouched.
- * The same count returns the input unchanged.
+ * A line never drops below what is already committed or spent (an accepted quote
+ * does not shrink because fewer guests are coming). The same count returns the input.
  */
 export function scaleForGuests(
   lines: readonly BudgetLine[],
@@ -194,7 +195,7 @@ export function scaleForGuests(
     l.perGuest
       ? {
           ...l,
-          allocated: Math.round((l.allocated * newCount) / oldCount),
+          allocated: Math.max(usedAmount(l), Math.round((l.allocated * newCount) / oldCount)),
           source: l.source === "quote" ? "quote" : "estimate",
         }
       : l,

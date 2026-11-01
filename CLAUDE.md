@@ -54,7 +54,8 @@ npm run check        # lint + typecheck + test + build  <- run before every comm
    - Components stay thin: they read from the store and call lib functions.
 5. **Tests**
    - Every function in `src/lib/` gets unit tests, covering edge cases: zero, negative, empty, and over-budget.
-   - Coverage gate is ≥ 90% lines, branches and functions on `src/lib/` and `functions/`.
+   - Coverage gate: ≥ 98% lines on `src/lib/` and `functions/`, ≥ 95% lines on the whole app.
+   - Invariants get seeded property tests (`tests/unit/properties.test.ts`).
 6. **Accessibility**
    - Semantic elements; every input has a `<label>`.
    - Visible focus rings; keyboard-only flow works.
