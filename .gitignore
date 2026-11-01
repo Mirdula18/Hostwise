@@ -13,3 +13,7 @@ blob-report
 *.mov
 screenshots/
 hostwise-docs/
+
+# Personal files that must never be committed
+*.pdf
+*.epub

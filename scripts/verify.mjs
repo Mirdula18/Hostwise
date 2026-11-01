@@ -17,7 +17,7 @@ const FORBIDDEN = [
   /^test-results\//,
   /(^|\/)\.dev\.vars$/,
   /(^|\/)\.env(?!\.example$)/,
-  /\.(mp4|mov|webm|avi)$/i,
+  /\.(mp4|mov|webm|avi|pdf|epub)$/i,
 ];
 
 const failures = [];
