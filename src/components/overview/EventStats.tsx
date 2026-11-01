@@ -44,7 +44,7 @@ export function EventStats({ event, today }: { event: Event; today: string }) {
             aria-valuemax={100}
             aria-valuenow={progress.percent}
             aria-valuetext={`${progress.percent}%`}
-            className="h-2 overflow-hidden rounded-full bg-line/30"
+            className="meter h-2 overflow-hidden rounded-full bg-line/30"
           >
             <div className="h-full bg-ok" style={{ width: `${progress.percent}%` }} />
           </div>

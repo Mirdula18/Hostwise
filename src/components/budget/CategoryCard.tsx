@@ -39,7 +39,7 @@ function LineAmounts({ line, money }: AmountsProps) {
         </div>
       </dl>
 
-      <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-full bg-line/30">
+      <div aria-hidden="true" className="meter h-2 w-full overflow-hidden rounded-full bg-line/30">
         <div
           className={`h-full ${s.over ? "bg-danger" : "bg-brand"}`}
           style={{ width: `${Math.min(100, s.percentUsed)}%` }}

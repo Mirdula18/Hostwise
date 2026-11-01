@@ -2,6 +2,7 @@
 export const paths = {
   home: "/",
   intake: "/intake",
+  accessibility: "/accessibility",
   event: (id: string) => `/event/${id}`,
   change: (id: string) => `/event/${id}/change`,
 } as const;
@@ -10,6 +11,7 @@ export const paths = {
 export const routePatterns = {
   home: paths.home,
   intake: paths.intake,
+  accessibility: paths.accessibility,
   event: paths.event(":id"),
   change: paths.change(":id"),
 } as const;

@@ -125,3 +125,20 @@ test("phone width: every screen reflows at 360 px without sideways scrolling", a
   await page.goto("/intake");
   await expectNoHorizontalScroll(page);
 });
+
+test("forced colours, more contrast and reduced motion: still usable and axe-clean", async ({
+  page,
+}) => {
+  await interceptAI(page);
+  await page.emulateMedia({ forcedColors: "active", contrast: "more", reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use sample event" }).click();
+  await expectNoAxeViolations(page);
+  const bar = page.getByRole("progressbar", { name: "Tasks done" });
+  await expect(bar).toHaveCSS("border-top-style", "solid");
+  await page.getByRole("tab", { name: "Budget" }).click();
+  await expectNoAxeViolations(page);
+  await page.getByRole("link", { name: "Accessibility" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Accessibility" })).toBeVisible();
+  await expectNoAxeViolations(page);
+});

@@ -55,6 +55,33 @@ body {
   @apply sr-only;
 }
 
+/* Users who ask for more contrast get darker secondary text and visible card edges. */
+@media (prefers-contrast: more) {
+  :root {
+    --c-muted: 28 25 23;
+    --c-edge: 87 83 78;
+    --c-line: 28 25 23;
+  }
+}
+
+/*
+ * Windows High Contrast / forced colors: backgrounds are replaced by system colours,
+ * so bars get an outline and keep their fill, and filled buttons get a border.
+ */
+@media (forced-colors: active) {
+  .meter,
+  progress {
+    border: 1px solid CanvasText;
+  }
+  .meter > * {
+    forced-color-adjust: none;
+    background-color: Highlight;
+  }
+  [role="tab"][aria-selected="true"] {
+    border-bottom-color: Highlight;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

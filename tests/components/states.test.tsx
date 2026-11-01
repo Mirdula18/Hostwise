@@ -234,3 +234,24 @@ describe("ErrorBoundary", () => {
     spy.mockRestore();
   });
 });
+
+describe("Accessibility statement", () => {
+  it("is reachable from the footer and has no axe violations", async () => {
+    resetStore();
+    const user = userEvent.setup();
+    const { container } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("link", { name: "Accessibility" }));
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Accessibility" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What you can expect" })).toBeInTheDocument();
+    const report = screen.getByRole("link", { name: /open an issue on GitHub/ });
+    expect(report).toHaveAttribute("rel", "noreferrer");
+    expect(report).toHaveAccessibleName(/opens in a new tab/);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});

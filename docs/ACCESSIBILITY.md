@@ -37,6 +37,16 @@ Target: **WCAG 2.1 AA**. This is checked automatically (axe in unit and e2e test
 - [ ] `@media (prefers-reduced-motion: reduce)` disables transitions.
 - [ ] Tap targets are at least 44×44 px.
 
+## User preferences and modes
+- [x] `prefers-reduced-motion`: animations and transitions are effectively disabled.
+- [x] `prefers-contrast: more`: secondary text, card edges and input borders switch to near-black.
+- [x] `forced-colors: active` (Windows High Contrast): progress and split bars keep an outline and a `Highlight` fill; every button variant has a border so filled buttons stay outlined; the selected tab keeps its indicator.
+- [x] An in-app accessibility statement (`/accessibility`, linked in the footer) lists what is supported, how it is tested and how to report a problem.
+
+## Automated checks
+- [x] vitest-axe on every screen and dialog in component tests.
+- [x] Playwright + axe with WCAG 2.0/2.1/2.2 A and AA tags plus best practices on every tab, at 360 px, and with forced colours, increased contrast and reduced motion emulated.
+
 ## Tables and data
 - [ ] The quote comparison uses a `<table>` with a `<caption>` and `<th scope>`.
 - [ ] Budget bars have a text equivalent ("₹12,000 of ₹15,000 used, 80%").

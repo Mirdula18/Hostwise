@@ -65,7 +65,10 @@ export function BudgetBoard({ event }: { event: Event }) {
       {event.budget.length > 0 ? (
         <figure className="space-y-2">
           <figcaption className="text-sm font-semibold">Where the money goes</figcaption>
-          <div aria-hidden="true" className="flex h-4 overflow-hidden rounded-full bg-line/30">
+          <div
+            aria-hidden="true"
+            className="meter flex h-4 overflow-hidden rounded-full bg-line/30"
+          >
             {event.budget.map((line, i) => (
               <div
                 key={line.id}

@@ -10,6 +10,7 @@ const Intake = lazy(() => import("./routes/Intake"));
 const EventPage = lazy(() => import("./routes/EventPage"));
 const Change = lazy(() => import("./routes/Change"));
 const NotFound = lazy(() => import("./routes/NotFound"));
+const Accessibility = lazy(() => import("./routes/Accessibility"));
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold ${
@@ -61,16 +62,25 @@ export default function App() {
               <Route path={routePatterns.intake} element={<Intake />} />
               <Route path={routePatterns.event} element={<EventPage />} />
               <Route path={routePatterns.change} element={<Change />} />
+              <Route path={routePatterns.accessibility} element={<Accessibility />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>
       </main>
       <footer className="border-t border-edge bg-surface print:hidden">
-        <p className="mx-auto max-w-5xl px-4 py-3 text-sm text-muted">
-          Your plan is saved in this browser only. Amounts marked “Estimate” are suggestions, not
-          vendor prices.
-        </p>
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-sm text-muted">
+          <p>
+            Your plan is saved in this browser only. Amounts marked “Estimate” are suggestions, not
+            vendor prices.
+          </p>
+          <Link
+            to={paths.accessibility}
+            className="inline-flex min-h-11 items-center font-semibold text-brand underline"
+          >
+            Accessibility
+          </Link>
+        </div>
       </footer>
       <Toaster />
     </div>
