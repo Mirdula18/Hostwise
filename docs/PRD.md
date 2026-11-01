@@ -45,10 +45,10 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - A progress indicator; the user can go back and edit any answer.
 
 **AC**
-- [ ] Two different personas (kid's birthday vs. anniversary) receive visibly different follow-up questions.
-- [ ] Intake can be completed by keyboard only.
-- [ ] Answers are validated (guest count 1–1000, budget > 0, date in the future).
-- [ ] A "Use sample event" button skips intake (for demo and judges).
+- [x] Two different personas (kid's birthday vs. anniversary) receive visibly different follow-up questions.
+- [x] Intake can be completed by keyboard only.
+- [x] Answers are validated (guest count 1–1000, budget > 0, date in the future).
+- [x] A "Use sample event" button skips intake (for demo and judges).
 
 ### F2 — Plan generation [P][B][T]
 - One Gemini call with a structured JSON schema returns:
@@ -59,10 +59,10 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - Code converts percentages into amounts, and offsets into dates.
 
 **AC**
-- [ ] Percentages are normalised to sum to exactly 100; amounts sum to exactly the total budget (rounding remainder goes to the largest category).
-- [ ] Every task due date is on or before the event date. If not, it is marked "at risk".
-- [ ] Assumptions are listed in a visible "What I assumed" panel.
-- [ ] An invalid AI response triggers one retry, then an error state with "Try again".
+- [x] Percentages are normalised to sum to exactly 100; amounts sum to exactly the total budget (rounding remainder goes to the largest category).
+- [x] Every task due date is on or before the event date. If not, it is marked "at risk".
+- [x] Assumptions are listed in a visible "What I assumed" panel.
+- [x] An invalid AI response triggers one retry, then an error state with "Try again".
 
 ### F3 — Budget board [B]
 - A card per category shows allocated, committed (quotes accepted), spent, remaining, and a source badge.
@@ -71,9 +71,9 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - Each category is marked `perGuest` true or false; per-guest categories scale with guest count.
 
 **AC**
-- [ ] Rebalancing takes from the lowest-priority unlocked categories first and never drives a category below 0.
-- [ ] Over-budget state is shown in text and an icon, not only in colour.
-- [ ] Every AI-derived number shows an "Estimate" badge with a tooltip explaining it.
+- [x] Rebalancing takes from the lowest-priority unlocked categories first and never drives a category below 0.
+- [x] Over-budget state is shown in text and an icon, not only in colour.
+- [x] Every AI-derived number shows an "Estimate" badge with a tooltip explaining it.
 
 ### F4 — Timeline and Do Next [T]
 - A list view grouped into: Overdue / This week / Next 2 weeks / Later.
@@ -83,9 +83,9 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - The user can add, edit and delete custom tasks.
 
 **AC**
-- [ ] A delay shifts dependents transitively and preserves their order.
-- [ ] Circular dependencies are rejected with a clear message.
-- [ ] The Today card updates immediately when a task is completed.
+- [x] A delay shifts dependents transitively and preserves their order.
+- [x] Circular dependencies are rejected with a clear message.
+- [x] The Today card updates immediately when a task is completed.
 
 ### F5 — Change and trade-off engine [C] ★ headline
 - A free-text box ("What changed?") plus quick chips: Budget change · Guest change · Date change · Vendor delay.
@@ -98,10 +98,10 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - A change history is kept, with undo of the last change.
 
 **AC**
-- [ ] "Add 20 guests" correctly scales per-guest categories and reports the shortfall.
-- [ ] Options never cut a locked category, and never cut the #1 priority unless no other option exists (and say so).
-- [ ] Apply updates budget and timeline in one atomic store update; Undo restores the previous state exactly.
-- [ ] The explanation names the user's priorities explicitly.
+- [x] "Add 20 guests" correctly scales per-guest categories and reports the shortfall.
+- [x] Options never cut a locked category, and never cut the #1 priority unless no other option exists (and say so).
+- [x] Apply updates budget and timeline in one atomic store update; Undo restores the previous state exactly.
+- [x] The explanation names the user's priorities explicitly.
 
 ### F6 — Vendor desk [V]
 - Vendor entry fields: name, category, contact (free text), status (`considering | contacted | quoted | booked | declined`), and notes.
@@ -111,8 +111,8 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - Accepting a quote sets that category's committed amount, with source `quote`.
 
 **AC**
-- [ ] The UI and AI never state that a vendor is available or what they charge; only user-entered quotes show prices.
-- [ ] Comparison flags quotes over the allocation.
+- [x] The UI and AI never state that a vendor is available or what they charge; only user-entered quotes show prices.
+- [x] Comparison flags quotes over the allocation.
 
 ### F7 — Persistence and export
 - Multiple events are stored in localStorage (versioned with migrations).
@@ -120,8 +120,8 @@ Challenge-statement line references: **[P]** Personalised planning · **[B]** Bu
 - A printable run-of-show via a print stylesheet.
 
 **AC**
-- [ ] Reloading keeps all state.
-- [ ] Importing a malformed file shows an error and does not corrupt state.
+- [x] Reloading keeps all state.
+- [x] Importing a malformed file shows an error and does not corrupt state.
 
 ## 5. Non-goals
 Payments, real vendor search, accounts or login, real-time pricing, native mobile apps.

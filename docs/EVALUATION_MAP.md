@@ -20,12 +20,14 @@ This page tells evaluators, human or AI, where to find the evidence for each jud
 | Execution over inspiration | Today card, tasks, vendor desk, run-of-show print | Demo video steps 4–7 |
 
 ## Code Quality
-- Strict TypeScript, Zod-inferred types, no `any`.
-- ESLint with typescript-eslint, react-hooks, jsx-a11y, import order and JSDoc rules; Prettier.
+- Strict TypeScript plus `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitReturns` and `noImplicitOverride`; Zod-inferred types; no `any`.
+- **Zero type casts** in production code (`consistent-type-assertions: never`): JSON from the network or storage is validated with Zod; narrowing uses type guards.
+- Type-aware ESLint (`strictTypeChecked` + `stylisticTypeChecked`), react-hooks, jsx-a11y, import order and JSDoc rules; Prettier. Zero warnings, no inline `eslint-disable`.
 - Enforced limits in production code: cyclomatic complexity ≤ 10, functions ≤ 40 lines (components ≤ 150), no magic numbers (shared limits live in `src/lib/constants.ts`), JSDoc on every export in `src/lib` and `functions/`.
 - `knip` in `npm run check`: no unused files, exports or dependencies.
 - One error pattern: `Result<T, E>` from `src/lib/result.ts`, used by the lib, the store and the proxy.
-- Pure, framework-free logic in `src/lib`; thin components; one responsibility per module.
+- Pure, framework-free logic in `src/lib`; thin components; one responsibility per module, no source file over 250 lines.
+- One place for every route (`src/routes/paths.ts`) and every limit (`src/lib/constants.ts`).
 - Conventional commits; CI on every push (`.github/workflows/ci.yml`).
 
 ## Security
@@ -45,14 +47,16 @@ See `docs/SECURITY.md`. Highlights:
 - Gemini JSON mode with schemas, so there's no extra parsing round-trip, plus capped output tokens.
 
 ## Testing
-- Vitest unit tests for every `src/lib` function and the proxy (≥ 90% lines, branches and functions, enforced).
+- Vitest unit tests for every `src/lib` function and the proxy (≥ 98% lines and functions, enforced); whole app including UI ≥ 95% lines (currently 99.3%).
+- Seeded property tests: 300 generated cases per invariant (money always balances, locked lines never move, every option applies, dependency order, delay ripple). They found and fixed a real bug (guest scaling below an accepted quote).
+- Performance budgets for a 100-guest, 15-category, 60-task plan.
 - Proxy tests: 400, 403, 413, 429, 502, success, and a check that the key never leaks.
 - AI client tests: retry, timeout, cache.
-- Component tests with axe; one Playwright journey with intercepted AI responses.
+- Component tests with axe for every screen and edge state; Playwright journeys (headline change flow, AI-down intake, vendor desk, backup round trip, 360 px, keyboard only, forced colours) with intercepted AI responses.
 - See `docs/TESTING.md`.
 
 ## Accessibility
-- WCAG 2.1 AA checklist in `docs/ACCESSIBILITY.md`.
-- axe runs in component and e2e tests.
+- WCAG 2.2 AA checklist in `docs/ACCESSIBILITY.md`, plus an in-app accessibility statement (`/accessibility`).
+- axe runs in component tests and in Playwright with WCAG 2.0–2.2 A/AA and best-practice rules, including under emulated forced colours, increased contrast and reduced motion.
 - Keyboard-first rank control and tabs; live regions for AI output; status never shown by colour alone.
-- Reduced-motion support; works at 360 px and 200% zoom.
+- Reduced-motion, `prefers-contrast: more` and Windows High Contrast (`forced-colors`) support; works at 360 px and 200% zoom.

@@ -46,12 +46,14 @@ npm run dev                      # vite :5173, proxies /api -> :8788
 ```
 
 ## 5. Post-deploy checks
-- [ ] Open `https://hostwise.pages.dev` (or your project URL) in an incognito window. It loads with no login.
-- [ ] "Use sample event" works, and an AI action succeeds (the Network tab shows `/api/gemini` returning 200).
-- [ ] The response headers include the CSP (DevTools → Network → document).
-- [ ] Search the page source and JS bundles for `AIza`: no matches.
-- [ ] `curl -X POST https://<url>/api/gemini -d '{}'` returns 400 or 403 and doesn't crash.
-- [ ] Deep link `/event/xyz` loads the SPA (via `_redirects`).
+Verified on 2026-11-01 against https://hostwise.pages.dev:
+
+- [x] Open `https://hostwise.pages.dev` (or your project URL) in an incognito window. It loads with no login.
+- [x] "Use sample event" works, and an AI action succeeds (the Network tab shows `/api/gemini` returning 200).
+- [x] The response headers include the CSP (DevTools → Network → document).
+- [x] Search the page source and JS bundles for `AIza`: no matches.
+- [x] `curl -X POST https://<url>/api/gemini -d '{}'` returns 400 or 403 and doesn't crash.
+- [x] Deep link `/event/xyz` loads the SPA (via `_redirects`).
 
 ## 6. Optional extras
 - **Web Analytics:** turn it on in the Pages project settings; no code is needed.
