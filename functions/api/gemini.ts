@@ -2,6 +2,7 @@ import { callGemini, type GeminiEnv } from "./_lib/gemini";
 import { RateLimiter } from "./_lib/rateLimit";
 import { RequestEnvelope, TaskInputs, type TaskName } from "./_lib/schemas";
 import { HTTP, KIB } from "../../src/lib/constants";
+import { tryParseJson } from "../../src/lib/json";
 import { err, ok, type Result } from "../../src/lib/result";
 
 /** Minimal Pages Function context; avoids pulling Workers globals into the app's types. */
@@ -75,14 +76,6 @@ function precheck(request: Request, limiter: RateLimiter, at: number): Response 
   return null;
 }
 
-function parseJson(raw: string): unknown {
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return undefined;
-  }
-}
-
 type TaskCall = { task: TaskName; input: unknown };
 
 /** Reads the body and validates it against the envelope and the task's strict schema. */
@@ -91,7 +84,7 @@ async function readTaskCall(request: Request): Promise<Result<TaskCall, Response
   if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) {
     return err(fail("too_large", HTTP.TOO_LARGE));
   }
-  const envelope = RequestEnvelope.safeParse(parseJson(raw));
+  const envelope = RequestEnvelope.safeParse(tryParseJson(raw));
   if (!envelope.success) return err(fail("bad_request", HTTP.BAD_REQUEST));
   const input = TaskInputs[envelope.data.task].safeParse(envelope.data.input);
   if (!input.success) return err(fail("bad_request", HTTP.BAD_REQUEST));

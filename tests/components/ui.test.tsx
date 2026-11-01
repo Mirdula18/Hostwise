@@ -120,9 +120,13 @@ describe("UI kit", () => {
     act(() => screen.getByRole("button", { name: "Undo" }).click());
     expect(onUndo).toHaveBeenCalled();
     act(() => toast("Saved."));
-    act(() => vi.advanceTimersByTime(TOAST_MS - 1));
+    act(() => {
+      vi.advanceTimersByTime(TOAST_MS - 1);
+    });
     expect(screen.getByText("Saved.")).toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(1));
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     expect(screen.queryByText("Saved.")).not.toBeInTheDocument();
     act(() => toast("Bye."));
     act(() => screen.getByRole("button", { name: "Dismiss notification" }).click());
@@ -136,7 +140,7 @@ describe("UI kit", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveAttribute("tabindex", "-1");
   });
 
-  it("ErrorBoundary shows an alert with Try again instead of crashing", async () => {
+  it("ErrorBoundary shows an alert with Try again instead of crashing", () => {
     const Boom = () => {
       throw new Error("boom");
     };

@@ -1,5 +1,7 @@
+import { z } from "zod";
 import { buildGeminiRequest } from "./prompts";
 import { HTTP, SECOND_MS } from "../../../src/lib/constants";
+import { parseJson } from "../../../src/lib/json";
 import { err, ok, type Result } from "../../../src/lib/result";
 import type { TaskName } from "./schemas";
 
@@ -18,9 +20,18 @@ type GeminiFailure = {
 
 type GeminiResult = Result<unknown, GeminiFailure>;
 
-type GenerateContentResponse = {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
-};
+/** The slice of Gemini's generateContent response the proxy reads. */
+const GenerateContentResponse = z.object({
+  candidates: z
+    .array(
+      z.object({
+        content: z
+          .object({ parts: z.array(z.object({ text: z.string().optional() })).optional() })
+          .optional(),
+      }),
+    )
+    .optional(),
+});
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const MODEL_NAME = /^[\w.-]+$/;
@@ -33,17 +44,19 @@ const TIMED_OUT = err<GeminiFailure>({ status: HTTP.GATEWAY_TIMEOUT, code: "time
 /** The key and model from the environment, or null when either is missing or unsafe. */
 function resolveConfig(env: GeminiEnv): { key: string; model: string } | null {
   const key = env.GEMINI_API_KEY?.trim();
-  const model = env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
-  return key && MODEL_NAME.test(model) ? { key, model } : null;
+  const model = env.GEMINI_MODEL?.trim() ?? "";
+  const chosen = model === "" ? DEFAULT_MODEL : model;
+  return key && MODEL_NAME.test(chosen) ? { key, model: chosen } : null;
 }
 
 /** Joins the first candidate's text parts and parses them as JSON. */
 async function readOutput(res: Response): Promise<GeminiResult> {
   if (!res.ok) return UPSTREAM_ERROR;
-  const body = (await res.json()) as GenerateContentResponse;
-  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
+  const body = GenerateContentResponse.safeParse(await res.json());
+  if (!body.success) return BAD_OUTPUT;
+  const text = body.data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
   if (!text) return BAD_OUTPUT;
-  return ok(JSON.parse(text) as unknown);
+  return ok(parseJson(text));
 }
 
 /**

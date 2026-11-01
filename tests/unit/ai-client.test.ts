@@ -2,6 +2,7 @@ import { z } from "zod";
 import { AIError, callAI, clearAICache } from "../../src/lib/ai/client";
 import { cacheKey, hashKey, LRUCache, stableStringify } from "../../src/lib/ai/cache";
 import { debounce } from "../../src/lib/ai/debounce";
+import { must, sentBody } from "../must";
 
 const Schema = z.object({ questions: z.array(z.string()).min(1) });
 
@@ -13,7 +14,7 @@ describe("callAI", () => {
   beforeEach(() => clearAICache());
 
   it("returns parsed data on success", async () => {
-    const fetchImpl = vi.fn(async () => reply({ data: { questions: ["a"] } }));
+    const fetchImpl = vi.fn(() => Promise.resolve(reply({ data: { questions: ["a"] } })));
     await expect(
       callAI("vendor_questions", { category: "x" }, Schema, { fetchImpl }),
     ).resolves.toEqual({
@@ -21,7 +22,7 @@ describe("callAI", () => {
     });
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("/api/gemini");
-    expect(JSON.parse(String(init.body))).toEqual({
+    expect(sentBody(init)).toEqual({
       task: "vendor_questions",
       input: { category: "x" },
     });
@@ -29,7 +30,7 @@ describe("callAI", () => {
 
   it("retries an invalid response with a fix hint and returns the valid retry", async () => {
     const fetchImpl = vi
-      .fn()
+      .fn<typeof fetch>()
       .mockResolvedValueOnce(reply({ data: { questions: [] } }))
       .mockResolvedValueOnce(reply({ data: { questions: ["fixed"] } }));
     await expect(
@@ -37,12 +38,14 @@ describe("callAI", () => {
     ).resolves.toEqual({
       questions: ["fixed"],
     });
-    const second = JSON.parse(String((fetchImpl.mock.calls[1] as [string, RequestInit])[1].body));
-    expect(second.input._fixHint).toMatch(/questions/);
+    const second = sentBody(must(fetchImpl.mock.calls[1])[1]);
+    expect(second).toMatchObject({
+      input: { _fixHint: expect.stringMatching(/questions/) as unknown },
+    });
   });
 
   it("throws AIError after two invalid responses", async () => {
-    const fetchImpl = vi.fn(async () => reply({ data: { wrong: true } }));
+    const fetchImpl = vi.fn(() => Promise.resolve(reply({ data: { wrong: true } })));
     const p = callAI("vendor_questions", { category: "x" }, Schema, { fetchImpl });
     await expect(p).rejects.toBeInstanceOf(AIError);
     await expect(p).rejects.toMatchObject({ code: "invalid_response" });
@@ -75,10 +78,9 @@ describe("callAI", () => {
       [new TypeError("Failed to fetch"), "network"],
     ];
     for (const [result, code] of cases) {
-      const fetchImpl = vi.fn(async () => {
-        if (result instanceof Error) throw result;
-        return result;
-      });
+      const fetchImpl = vi.fn(() =>
+        result instanceof Error ? Promise.reject(result) : Promise.resolve(result),
+      );
       await expect(
         callAI("plan", { n: code }, Schema, { fetchImpl, cache: null }),
       ).rejects.toMatchObject({ code });
@@ -101,7 +103,7 @@ describe("callAI", () => {
   });
 
   it("serves identical input from the cache without a second request", async () => {
-    const fetchImpl = vi.fn(async () => reply({ data: { questions: ["a"] } }));
+    const fetchImpl = vi.fn(() => Promise.resolve(reply({ data: { questions: ["a"] } })));
     await callAI("vendor_questions", { b: 1, a: 2 }, Schema, { fetchImpl });
     await callAI("vendor_questions", { a: 2, b: 1 }, Schema, { fetchImpl });
     expect(fetchImpl).toHaveBeenCalledTimes(1);

@@ -24,7 +24,7 @@ function Demo({ onChange }: { onChange?: (v: string[]) => void }) {
 const order = () =>
   within(screen.getByRole("list"))
     .getAllByRole("listitem")
-    .map((li) => li.textContent?.match(/Position \d+: (\D+?)(Top|$)/)?.[1]);
+    .map((li) => /Position \d+: (\D+?)(Top|$)/.exec(li.textContent)?.[1]);
 
 describe("RankControl", () => {
   it("has no axe violations and labels each button with its item", async () => {

@@ -1,5 +1,6 @@
 import { History, Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { paths } from "../../routes/paths";
 import { useCanUndo, useEventStore } from "../../store/useEventStore";
 import { Button, buttonClass } from "../ui/Button";
 import { toast } from "../ui/Toast";
@@ -34,7 +35,7 @@ export function ChangeHistory({ event }: { event: Event }) {
         </ol>
       )}
       <div className="flex flex-wrap gap-2 print:hidden">
-        <Link to={`/event/${event.id}/change`} className={buttonClass("primary")}>
+        <Link to={paths.change(event.id)} className={buttonClass("primary")}>
           Something changed
         </Link>
         {canUndo ? (

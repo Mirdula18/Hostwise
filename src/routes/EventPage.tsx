@@ -1,6 +1,7 @@
 import { Download, Printer, Shuffle } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import NotFound from "./NotFound";
+import { paths } from "./paths";
 import { BudgetBoard } from "../components/budget/BudgetBoard";
 import { EventStats } from "../components/overview/EventStats";
 import { Overview } from "../components/overview/Overview";
@@ -50,7 +51,7 @@ export default function EventPage() {
             <PageHeading title={profile.title} />
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
-            <Link to={`/event/${event.id}/change`} className={buttonClass("primary")}>
+            <Link to={paths.change(event.id)} className={buttonClass("primary")}>
               <Shuffle aria-hidden="true" className="h-4 w-4" />
               What changed?
             </Link>

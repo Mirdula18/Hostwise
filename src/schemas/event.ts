@@ -39,7 +39,7 @@ export type AgeGroup = z.infer<typeof AgeGroup>;
 
 export const Setting = z.enum(["indoor", "outdoor", "either"]);
 
-const IsoDate = z.string().date();
+const IsoDate = z.iso.date();
 
 /** Shape of the intake answers; "date must be in the future" is checked by `isFutureDate`. */
 export const EventProfile = z.object({

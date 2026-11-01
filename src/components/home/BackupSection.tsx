@@ -58,7 +58,7 @@ export function BackupSection({ events }: { events: Event[] }) {
           className="sr-only"
           tabIndex={-1}
           aria-label="Choose a Hostwise export file"
-          onChange={onImport}
+          onChange={(e) => void onImport(e)}
         />
       </div>
       {importError ? (

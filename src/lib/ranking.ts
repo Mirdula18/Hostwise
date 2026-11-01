@@ -62,7 +62,7 @@ function checkDate(
   current: string,
   request: Extract<ChangeRequest, { kind: "date" }>,
   today: string,
-): Result<ActionableChange, string> {
+): Result<ActionableChange> {
   if (request.newDate === current) return err(`The event is already on ${current}.`);
   return isFutureDate(request.newDate, today)
     ? ok(request)
@@ -77,7 +77,7 @@ export function checkChange(
   event: Event,
   request: ChangeRequest,
   today: string,
-): Result<ActionableChange, string> {
+): Result<ActionableChange> {
   const { profile } = event;
   switch (request.kind) {
     case "unclear":

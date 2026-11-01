@@ -96,10 +96,9 @@ export function topoSort(tasks: readonly Task[]): Task[] {
   };
   const ready = tasks.filter((t) => indegree.get(t.id) === 0).map((t) => t.id);
   const out: Task[] = [];
-  while (ready.length > 0) {
-    ready.sort(cmp);
-    const id = ready.shift() as string;
-    out.push(byId.get(id) as Task);
+  for (let id = next(ready, cmp); id !== undefined; id = next(ready, cmp)) {
+    const task = byId.get(id);
+    if (task) out.push(task);
     for (const child of dependents.get(id) ?? []) {
       const n = (indegree.get(child) ?? 0) - 1;
       indegree.set(child, n);
@@ -107,6 +106,12 @@ export function topoSort(tasks: readonly Task[]): Task[] {
     }
   }
   return out;
+}
+
+/** Sorts the ready list and takes its first id (undefined when empty). */
+function next(ready: string[], cmp: (a: string, b: string) => number): string | undefined {
+  ready.sort(cmp);
+  return ready.shift();
 }
 
 /** id -> ids of tasks that directly depend on it. */
@@ -123,8 +128,7 @@ export function transitiveDependents(tasks: readonly Task[], id: string): string
   const deps = dependentsMap(tasks);
   const seen = new Set<string>();
   const queue = [...(deps.get(id) ?? [])];
-  while (queue.length > 0) {
-    const next = queue.shift() as string;
+  for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
     if (next === id || seen.has(next)) continue;
     seen.add(next);
     queue.push(...(deps.get(next) ?? []));
@@ -170,10 +174,11 @@ export function toDates(
   const tasks: Task[] = [];
   const seenKeys = new Set<string>();
   for (const t of aiTasks) {
-    if (seenKeys.has(t.key)) continue;
+    const id = idForKey.get(t.key);
+    if (id === undefined || seenKeys.has(t.key)) continue;
     seenKeys.add(t.key);
     tasks.push({
-      id: idForKey.get(t.key) as string,
+      id,
       title: t.title,
       category: t.category,
       dueDate: shiftDate(eventDate, -t.dueOffsetDays),

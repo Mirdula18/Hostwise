@@ -58,7 +58,7 @@ describe("rankOptionsInput", () => {
       occasion: "anniversary",
     });
     expect(input.categories).toHaveLength(event.budget.length);
-    expect(input.categories.every((c) => c.locked === false)).toBe(true);
+    expect(input.categories.every((c) => !c.locked)).toBe(true);
     expect(TaskInputs.rank_options.safeParse(input).success).toBe(true);
   });
 });

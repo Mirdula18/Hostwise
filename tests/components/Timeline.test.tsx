@@ -6,6 +6,7 @@ import { Toaster } from "../../src/components/ui/Toast";
 import { useEventStore } from "../../src/store/useEventStore";
 import { event } from "../unit/fixtures";
 import { resetStore } from "./render";
+import { must } from "../must";
 
 const TODAY = "2026-11-12";
 
@@ -20,9 +21,11 @@ function Timeline() {
 }
 
 const item = (title: string) =>
-  screen
-    .getAllByRole("listitem")
-    .find((li) => within(li).queryByRole("heading", { name: title })) as HTMLElement;
+  must(
+    screen
+      .getAllByRole("listitem")
+      .find((li) => within(li).queryByRole("heading", { name: title })),
+  );
 
 describe("Timeline tab", () => {
   beforeEach(() => {

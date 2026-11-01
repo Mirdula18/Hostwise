@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { Toaster } from "./components/ui/Toast";
+import { paths, routePatterns } from "./routes/paths";
 
 const Home = lazy(() => import("./routes/Home"));
 const Intake = lazy(() => import("./routes/Intake"));
@@ -27,7 +28,10 @@ export default function App() {
       </a>
       <header className="sticky top-0 z-30 border-b border-edge bg-surface/95 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-2">
-          <Link to="/" className="inline-flex min-h-11 items-center gap-2 text-lg font-bold">
+          <Link
+            to={paths.home}
+            className="inline-flex min-h-11 items-center gap-2 text-lg font-bold"
+          >
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-brand-ink">
               <PartyPopper aria-hidden="true" className="h-5 w-5" />
             </span>
@@ -36,12 +40,12 @@ export default function App() {
           <nav aria-label="Primary">
             <ul className="flex gap-1">
               <li>
-                <NavLink to="/" end className={navClass}>
+                <NavLink to={paths.home} end className={navClass}>
                   My events
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/intake" className={navClass}>
+                <NavLink to={paths.intake} className={navClass}>
                   New event
                 </NavLink>
               </li>
@@ -53,10 +57,10 @@ export default function App() {
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={<p aria-busy="true">Loading…</p>}>
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/intake" element={<Intake />} />
-              <Route path="/event/:id" element={<EventPage />} />
-              <Route path="/event/:id/change" element={<Change />} />
+              <Route path={routePatterns.home} element={<Home />} />
+              <Route path={routePatterns.intake} element={<Intake />} />
+              <Route path={routePatterns.event} element={<EventPage />} />
+              <Route path={routePatterns.change} element={<Change />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

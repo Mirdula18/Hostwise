@@ -12,6 +12,7 @@ import {
 import { format, fromMinor, toMinor } from "./money";
 import { PRIORITY_LABELS } from "./priorities";
 import { err, ok, type Result } from "./result";
+import { nonEmpty } from "./text";
 import { isFutureDate } from "./timeline";
 import { AgeGroup, EventProfile, Occasion, Priority, Setting } from "../schemas/event";
 import type { NextQuestion } from "../schemas/ai";
@@ -54,7 +55,7 @@ export function normalizeQuestion(
   return {
     done: false,
     field: q.field,
-    question: q.question?.trim() || spec.question,
+    question: nonEmpty(q.question) ?? spec.question,
     inputType: spec.inputType,
     ...(spec.options ? { options: spec.options.map((o) => o.value) } : {}),
     ...(helper !== undefined ? { helper } : {}),
@@ -67,7 +68,13 @@ export function fallbackQuestion(
   asked: readonly string[],
 ): IntakeQuestion | { done: true } {
   const q = nextFallbackQuestion(answers, asked);
-  return q.done || !isIntakeField(q.field) ? { done: true } : (q as IntakeQuestion);
+  if (q.done || !isIntakeField(q.field)) return { done: true };
+  return {
+    ...q,
+    done: false,
+    field: q.field,
+    question: q.question ?? FIELD_SPECS[q.field].question,
+  };
 }
 
 /** True once the intake has asked its maximum number of questions. */
@@ -84,7 +91,7 @@ const TEXT_LIMITS: Partial<Record<IntakeField, number>> = {
 /** An answer as the form holds it: text, or a list for multi-select and rank. */
 export type Raw = string | string[];
 
-type AnswerResult = Result<IntakeAnswers[IntakeField], string>;
+type AnswerResult = Result<IntakeAnswers[IntakeField]>;
 type AnswerInput = { text: string; list: readonly string[]; today: string };
 type AnswerParser = (input: AnswerInput) => AnswerResult;
 
@@ -109,13 +116,13 @@ function parseBudget({ text }: AnswerInput): AnswerResult {
 }
 
 function parsePriorities({ list }: AnswerInput): AnswerResult {
-  const valid = list.filter((p) => Priority.safeParse(p).success) as Priority[];
+  const valid = list.filter((p): p is Priority => Priority.safeParse(p).success);
   if (valid.length === 0) return err("Rank at least one priority.");
   return ok(valid.slice(0, LIMITS.PRIORITIES_MAX));
 }
 
 function parseAgeMix({ list }: AnswerInput): AnswerResult {
-  const valid = list.filter((a) => AgeGroup.safeParse(a).success) as AgeGroup[];
+  const valid = list.filter((a): a is AgeGroup => AgeGroup.safeParse(a).success);
   return valid.length > 0 ? ok(valid) : err("Choose at least one age group, or skip.");
 }
 
@@ -159,7 +166,7 @@ export function keepAnswers(answers: IntakeAnswers, fields: readonly IntakeField
 }
 
 /** Builds the final profile, filling in a default title. */
-export function finalizeProfile(answers: IntakeAnswers): Result<EventProfile, string> {
+export function finalizeProfile(answers: IntakeAnswers): Result<EventProfile> {
   const title =
     answers.title ??
     (answers.occasion && answers.date
@@ -171,28 +178,35 @@ export function finalizeProfile(answers: IntakeAnswers): Result<EventProfile, st
   return err(`Some answers are missing or invalid${missing ? ` (${String(missing)})` : ""}.`);
 }
 
+/** Labels for the structured answers; undefined for plain text and numbers. */
+function structuredAnswer(field: IntakeField, a: IntakeAnswers): string | undefined {
+  switch (field) {
+    case "occasion":
+      return a.occasion && OCCASION_LABELS[a.occasion];
+    case "totalBudget":
+      return a.totalBudget === undefined ? undefined : format(a.totalBudget, a.currency ?? "USD");
+    case "priorities":
+      return a.priorities?.map((p, i) => `${i + 1}. ${PRIORITY_LABELS[p]}`).join(", ");
+    case "ageMix":
+      return a.ageMix?.join(", ");
+    default:
+      return undefined;
+  }
+}
+
 /** Human-readable answer for the review list and for the raw form value. */
 export function displayAnswer(field: IntakeField, answers: IntakeAnswers): string {
   const v = answers[field];
   if (v === undefined) return "Skipped";
-  switch (field) {
-    case "occasion":
-      return OCCASION_LABELS[v as Occasion];
-    case "totalBudget":
-      return format(v as number, answers.currency ?? "USD");
-    case "priorities":
-      return (v as Priority[]).map((p, i) => `${i + 1}. ${PRIORITY_LABELS[p]}`).join(", ");
-    case "ageMix":
-      return (v as string[]).join(", ");
-    default:
-      return String(v);
-  }
+  return structuredAnswer(field, answers) ?? String(v);
 }
 
 /** The value to pre-fill when the user goes back to a question. */
 export function rawFor(field: IntakeField, answers: IntakeAnswers): Raw | undefined {
   const v = answers[field];
   if (v === undefined) return undefined;
-  if (field === "totalBudget") return String(fromMinor(v as number));
+  if (field === "totalBudget" && answers.totalBudget !== undefined) {
+    return String(fromMinor(answers.totalBudget));
+  }
   return Array.isArray(v) ? v.map(String) : String(v);
 }

@@ -204,7 +204,7 @@ export const MAX_OUTPUT_TOKENS = 8192;
 
 /** Gemini 3 models think by default; low keeps latency inside the proxy timeout. */
 const thinkingConfig = (model: string) =>
-  /^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: "low" } } : {};
+  model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "low" } } : {};
 
 /** The generateContent request body for a task. */
 export function buildGeminiRequest(task: TaskName, input: unknown, model = "") {

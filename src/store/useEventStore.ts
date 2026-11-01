@@ -76,7 +76,7 @@ type Actions = {
     option: TradeOffOption,
   ) => Result<void, ApplyError>;
   undo: (eventId: string) => boolean;
-  importEvents: (text: string) => Result<number, string>;
+  importEvents: (text: string) => Result<number>;
 };
 
 type EventStore = State & Actions;

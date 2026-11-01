@@ -45,7 +45,8 @@ export function Dialog({ open, onClose, title, description, children }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    const trigger = document.activeElement as HTMLElement | null;
+    const active = document.activeElement;
+    const trigger = active instanceof HTMLElement ? active : null;
     const first = panel.current?.querySelector<HTMLElement>(
       "[data-autofocus], input, select, textarea",
     );

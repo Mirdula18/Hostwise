@@ -1,7 +1,7 @@
+import { z, type ZodType } from "zod";
 import { HTTP, SECOND_MS } from "../constants";
 import { cacheKey, LRUCache } from "./cache";
 import type { AITaskName } from "../../schemas/ai";
-import type { ZodType } from "zod";
 
 type AIErrorCode =
   | "timeout"
@@ -51,7 +51,11 @@ type CallOptions = {
   cache?: LRUCache<unknown> | null;
 };
 
-type Envelope = { data?: unknown; error?: { code?: string } };
+/** The proxy's reply: `{ data }` on success, `{ error: { code } }` on failure. */
+const Envelope = z.object({
+  data: z.unknown().optional(),
+  error: z.object({ code: z.string().optional() }).optional(),
+});
 
 /** Maps a non-OK proxy response to the client's error code. */
 function codeForStatus(status: number): AIErrorCode {
@@ -63,12 +67,12 @@ function codeForStatus(status: number): AIErrorCode {
 
 /** Turns a proxy response into its data, or throws the matching AIError. */
 async function readEnvelope(res: Response): Promise<unknown> {
-  let body: Envelope;
-  try {
-    body = (await res.json()) as Envelope;
-  } catch {
+  const json: unknown = await res.json().catch(() => undefined);
+  const parsed = Envelope.safeParse(json);
+  if (!parsed.success) {
     throw new AIError(res.ok ? "invalid_response" : codeForStatus(res.status));
   }
+  const body = parsed.data;
   if (!res.ok || body.error) {
     throw new AIError(
       body.error?.code === "bad_output" ? "invalid_response" : codeForStatus(res.status),
@@ -134,8 +138,8 @@ export async function callAI<T>(
 ): Promise<T> {
   const cache = options.cache === undefined ? sharedCache : options.cache;
   const key = cacheKey(task, input);
-  const hit = cache?.get(key);
-  if (hit !== undefined) return hit as T;
+  const hit = cache === null ? undefined : schema.safeParse(cache.get(key));
+  if (hit?.success) return hit.data;
 
   let parsed = schema.safeParse(await post(task, input, options));
   if (!parsed.success) {

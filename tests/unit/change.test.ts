@@ -8,6 +8,7 @@ import {
 } from "../../src/lib/change";
 import type { ActionableChange, Event, TradeOffOption } from "../../src/schemas/event";
 import { allocatedSum, event } from "./fixtures";
+import { must } from "../must";
 
 const NOW = "2026-11-01T10:00:00.000Z";
 
@@ -198,7 +199,7 @@ describe("applyOption", () => {
   it("date change moves tasks by the difference between the new and old dates", () => {
     const e = event();
     const impact = computeImpact(e, { kind: "date", newDate: "2026-12-27" });
-    const r = applyOption(e, impact, generateOptions(e, impact)[0] as TradeOffOption, NOW);
+    const r = applyOption(e, impact, must(generateOptions(e, impact)[0]), NOW);
     expect(r.ok && r.value.profile.date).toBe("2026-12-27");
     expect(r.ok && r.value.tasks.map((t) => t.dueDate)).toEqual([
       "2026-11-17",
@@ -211,7 +212,7 @@ describe("applyOption", () => {
   it("delay change shifts the task and its dependents", () => {
     const e = event();
     const impact = computeImpact(e, { kind: "delay", taskId: "b", days: 5 });
-    const r = applyOption(e, impact, generateOptions(e, impact)[0] as TradeOffOption, NOW);
+    const r = applyOption(e, impact, must(generateOptions(e, impact)[0]), NOW);
     expect(r.ok && r.value.tasks.map((t) => t.dueDate)).toEqual([
       "2026-11-10",
       "2026-11-25",

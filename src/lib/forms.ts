@@ -24,7 +24,7 @@ export type VendorFields = {
 };
 
 /** Vendor form: the name is required; contact and notes are optional. */
-export function vendorInput(f: VendorFields): Result<VendorInput, string> {
+export function vendorInput(f: VendorFields): Result<VendorInput> {
   if (f.name.trim() === "") return err("Enter the vendor's name.");
   return ok({
     name: clip(f.name, TEXT.NAME),
@@ -44,7 +44,7 @@ type QuoteFields = {
 };
 
 /** Quote form: a positive amount; the deposit is optional but must be a number if given. */
-export function quoteInput(f: QuoteFields): Result<QuoteInput, string> {
+export function quoteInput(f: QuoteFields): Result<QuoteInput> {
   const amount = parseMoney(f.amount);
   if (amount === null || amount <= 0) return err("Enter the quoted amount, above 0.");
   const deposit = f.deposit.trim() === "" ? undefined : parseMoney(f.deposit);
@@ -62,7 +62,7 @@ export function quoteInput(f: QuoteFields): Result<QuoteInput, string> {
 export type TaskFields = { title: string; category: string; dueDate: string; dependsOn: string[] };
 
 /** Task form: a title within the limit and a due date. */
-export function taskInput(f: TaskFields): Result<TaskInput, string> {
+export function taskInput(f: TaskFields): Result<TaskInput> {
   if (f.title.trim() === "" || f.title.length > TEXT.TITLE) {
     return err(`Give the task a title (up to ${TEXT.TITLE} characters).`);
   }
@@ -83,7 +83,7 @@ export function quickChange(
   kind: QuickChangeKind,
   value: string,
   taskId: string,
-): Result<ActionableChange, string> {
+): Result<ActionableChange> {
   switch (kind) {
     case "budget": {
       const minor = parseMoney(value);
@@ -104,7 +104,7 @@ export function quickChange(
   }
 }
 
-function delayChange(value: string, taskId: string): Result<ActionableChange, string> {
+function delayChange(value: string, taskId: string): Result<ActionableChange> {
   const n = wholeInRange(value, LIMITS.DELAY_DAYS_MAX);
   return n === null
     ? err(`Enter a delay between 1 and ${LIMITS.DELAY_DAYS_MAX} days.`)

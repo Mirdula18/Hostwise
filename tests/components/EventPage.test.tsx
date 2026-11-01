@@ -6,6 +6,7 @@ import { createSampleEvent } from "../../src/lib/sample";
 import EventPage from "../../src/routes/EventPage";
 import { useEventStore } from "../../src/store/useEventStore";
 import { renderAt, resetStore } from "./render";
+import { must } from "../must";
 
 function setup(tab = "") {
   resetStore();
@@ -35,7 +36,7 @@ describe("EventPage overview", () => {
   it("shows the countdown, readable date and task progress in the header", async () => {
     const user = userEvent.setup();
     const { event } = setup();
-    const tile = screen.getByText("Event day").parentElement as HTMLElement;
+    const tile = must(screen.getByText("Event day").parentElement, "Event day tile");
     expect(tile).toHaveTextContent(/days to go/);
     expect(within(tile).getByText(formatDate(event.profile.date))).toBeInTheDocument();
     const bar = screen.getByRole("progressbar", { name: "Tasks done" });

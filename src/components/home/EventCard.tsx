@@ -2,6 +2,7 @@ import { CalendarDays, ListChecks, Trash2, Users, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { countdown, formatDate, taskProgress } from "../../lib/display";
 import { format } from "../../lib/money";
+import { paths } from "../../routes/paths";
 import { Button, buttonClass } from "../ui/Button";
 import type { Event } from "../../schemas/event";
 
@@ -12,7 +13,7 @@ export function EventCard({ event: e, today, onDelete }: Props) {
   return (
     <li className="rounded-xl border border-edge bg-surface shadow-sm p-4">
       <h3 className="text-lg font-bold leading-snug">
-        <Link to={`/event/${e.id}`} className="underline-offset-2 hover:underline">
+        <Link to={paths.event(e.id)} className="underline-offset-2 hover:underline">
           {e.profile.title}
         </Link>
       </h3>
@@ -43,7 +44,7 @@ export function EventCard({ event: e, today, onDelete }: Props) {
       </dl>
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
-          to={`/event/${e.id}`}
+          to={paths.event(e.id)}
           className={buttonClass("secondary")}
           aria-label={`Open ${e.profile.title}`}
         >

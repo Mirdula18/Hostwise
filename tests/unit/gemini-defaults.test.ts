@@ -19,7 +19,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("proxy defaults", () => {
   it("uses the global fetch when none is injected", async () => {
-    const fetchSpy = vi.fn(async () => reply([{ text: '{"questions":["Q?"]}' }]));
+    const fetchSpy = vi.fn(() => Promise.resolve(reply([{ text: '{"questions":["Q?"]}' }])));
     vi.stubGlobal("fetch", fetchSpy);
     const res = await onRequest({
       request: new Request(`${ORIGIN}/api/gemini`, {
@@ -34,7 +34,7 @@ describe("proxy defaults", () => {
   });
 
   it("accepts a request with no content-length or client IP header", async () => {
-    const fetchImpl = vi.fn(async () => reply([{ text: '{"questions":["Q?"]}' }]));
+    const fetchImpl = vi.fn(() => Promise.resolve(reply([{ text: '{"questions":["Q?"]}' }])));
     const limiter = new RateLimiter(1, 60_000);
     const handler = createHandler({ fetchImpl, limiter });
     const request = () =>
@@ -45,14 +45,14 @@ describe("proxy defaults", () => {
   });
 
   it("treats parts without text as empty and joins the rest", async () => {
-    const fetchImpl = vi.fn(async () => reply([{}, { text: '{"a":' }, { text: "1}" }]));
+    const fetchImpl = vi.fn(() => Promise.resolve(reply([{}, { text: '{"a":' }, { text: "1}" }])));
     expect(await callGemini(env, "plan", {}, fetchImpl)).toEqual({ ok: true, value: { a: 1 } });
   });
 
   it("calls the global fetch from callGemini by default", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => reply([{ text: "[]" }])),
+      vi.fn(() => Promise.resolve(reply([{ text: "[]" }]))),
     );
     expect(await callGemini(env, "plan", {})).toEqual({ ok: true, value: [] });
   });

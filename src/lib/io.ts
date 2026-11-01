@@ -1,5 +1,6 @@
 import { KIB } from "./constants";
 import { err, ok, type Result } from "./result";
+import { nonEmpty } from "./text";
 import { detectCycle } from "./timeline";
 import { StoreFile, type Event } from "../schemas/event";
 
@@ -28,7 +29,7 @@ function taskGraphProblem(event: Event): string | null {
  * Parses an exported file. Never throws: malformed, oversized or inconsistent
  * input returns an error message and the caller's state is left untouched.
  */
-export function importEvents(text: string): Result<Event[], string> {
+export function importEvents(text: string): Result<Event[]> {
   if (new Blob([text]).size > MAX_IMPORT_BYTES) return err("That file is larger than 2 MB.");
   let raw: unknown;
   try {
@@ -39,7 +40,7 @@ export function importEvents(text: string): Result<Event[], string> {
   const parsed = StoreFile.safeParse(raw);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    const where = issue?.path.join(".") || "file";
+    const where = nonEmpty(issue?.path.join(".")) ?? "file";
     return err(`That file is not a Hostwise export (${where}: ${issue?.message ?? "invalid"}).`);
   }
   for (const event of parsed.data.events) {

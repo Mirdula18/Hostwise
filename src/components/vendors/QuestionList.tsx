@@ -54,7 +54,7 @@ export function QuestionList({ event, vendor }: Props) {
       <div className="flex flex-wrap gap-2">
         <Button
           variant="secondary"
-          onClick={draft}
+          onClick={() => void draft()}
           disabled={loading}
           aria-label={`${questions.length > 0 ? "Redraft" : "Draft"} questions to ask ${vendor.name}`}
         >
@@ -62,7 +62,7 @@ export function QuestionList({ event, vendor }: Props) {
           {questions.length > 0 ? "Redraft questions" : "Draft questions to ask"}
         </Button>
         {questions.length > 0 ? (
-          <Button variant="ghost" onClick={copy}>
+          <Button variant="ghost" onClick={() => void copy()}>
             <Copy aria-hidden="true" className="h-4 w-4" />
             Copy questions
           </Button>
@@ -81,7 +81,7 @@ export function QuestionList({ event, vendor }: Props) {
           </div>
         ) : null}
       </LiveRegion>
-      {error ? <AIErrorAlert message={error} onRetry={draft} /> : null}
+      {error ? <AIErrorAlert message={error} onRetry={() => void draft()} /> : null}
     </div>
   );
 }

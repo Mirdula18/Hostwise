@@ -20,6 +20,7 @@ import { MAX_QUESTIONS, type IntakeAnswers } from "../../lib/intakeFallback";
 import { planToEvent } from "../../lib/plan";
 import { starterPlan } from "../../lib/starterPlan";
 import { todayIso } from "../../lib/timeline";
+import { paths } from "../../routes/paths";
 import { AIPlan, NextQuestion } from "../../schemas/ai";
 import { useEventStore } from "../../store/useEventStore";
 import { LiveRegion } from "../ui/LiveRegion";
@@ -45,6 +46,27 @@ async function aiQuestion(
 }
 
 type Phase = "loading" | "asking" | "planning" | "planError";
+
+/** Shown once the assistant has failed; intake carries on with the static questions. */
+function OfflineNotice() {
+  return (
+    <p className="rounded-lg border border-warn p-3 text-sm text-warn">
+      The assistant isn't reachable, so you're seeing our standard questions. Everything else works
+      the same.
+    </p>
+  );
+}
+
+const PHASE_MESSAGES: Partial<Record<Phase, string>> = {
+  loading: "Thinking about the next question…",
+  planning: "Drafting your plan… this can take a few seconds.",
+};
+
+/** Progress text for the busy phases, announced through the live region. */
+function PhaseMessage({ phase }: { phase: Phase }) {
+  const message = PHASE_MESSAGES[phase];
+  return message ? <p>{message}</p> : null;
+}
 
 /**
  * One question at a time. Gemini picks the next question; if it is unavailable or
@@ -75,7 +97,7 @@ export function IntakeChat() {
           ? starterPlan(profile, today)
           : await callAI("plan", profile, AIPlan, { signal: abortRef.current?.signal });
         const id = createEvent(planToEvent(profile, plan));
-        navigate(`/event/${id}`);
+        void navigate(paths.event(id));
       } catch (e) {
         if (e instanceof AIError && e.code === "aborted") return;
         setPlanError(e instanceof AIError ? e.message : "Something went wrong.");
@@ -108,7 +130,10 @@ export function IntakeChat() {
       const controller = new AbortController();
       abortRef.current = controller;
       setFieldError(null);
-      if (reachedLimit(asked)) return finish(next, asked);
+      if (reachedLimit(asked)) {
+        finish(next, asked);
+        return;
+      }
       setPhase("loading");
 
       const ai = offlineRef.current ? null : await aiQuestion(next, asked, controller.signal);
@@ -118,7 +143,10 @@ export function IntakeChat() {
         setOffline(true);
       }
       const q = isQuestion(ai) ? ai : fallbackQuestion(next, asked);
-      if (q.done) return finish(next, asked);
+      if (q.done) {
+        finish(next, asked);
+        return;
+      }
       setReopened(undefined);
       setCurrent(q);
       setPhase("asking");
@@ -175,15 +203,9 @@ export function IntakeChat() {
     <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
       <div className="space-y-4">
         <ProgressBar current={Math.min(steps.length + 1, MAX_QUESTIONS)} max={MAX_QUESTIONS} />
-        {offline ? (
-          <p className="rounded-lg border border-warn p-3 text-sm text-warn">
-            The assistant isn't reachable, so you're seeing our standard questions. Everything else
-            works the same.
-          </p>
-        ) : null}
+        {offline ? <OfflineNotice /> : null}
         <LiveRegion busy={phase === "loading" || phase === "planning"}>
-          {phase === "loading" ? <p>Thinking about the next question…</p> : null}
-          {phase === "planning" ? <p>Drafting your plan… this can take a few seconds.</p> : null}
+          <PhaseMessage phase={phase} />
           {phase === "asking" && current ? (
             <QuestionStep
               key={`${current.field}-${steps.length}`}

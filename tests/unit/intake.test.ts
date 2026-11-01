@@ -133,10 +133,8 @@ describe("normalizeQuestion", () => {
       {},
       [],
     );
-    expect(q).toMatchObject({
-      question: "About how many guests are you expecting?",
-      helper: expect.stringMatching(/1000/),
-    });
+    expect(q).toMatchObject({ question: "About how many guests are you expecting?" });
+    expect(q && !q.done ? q.helper : "").toMatch(/1000/);
   });
 });
 
@@ -193,10 +191,10 @@ describe("starterPlan", () => {
         normalisePercents(plan.budget.map((x) => x.percent))[i],
       ]),
     );
-    expect(pct["Catering"]).toBeGreaterThan(pct["Venue"] ?? 0);
+    expect(pct.Catering).toBeGreaterThan(pct.Venue ?? 0);
     expect(sum(Object.values(pct).map(Number))).toBe(100);
-    expect(plan.tasks.some((t) => /step-free/.test(t.title))).toBe(true);
-    expect(plan.tasks.some((t) => /dietary/.test(t.title))).toBe(true);
+    expect(plan.tasks.some((t) => t.title.includes("step-free"))).toBe(true);
+    expect(plan.tasks.some((t) => t.title.includes("dietary"))).toBe(true);
   });
 
   it("compresses deadlines into the time left and skips optional tasks", () => {

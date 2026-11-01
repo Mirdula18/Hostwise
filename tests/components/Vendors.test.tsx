@@ -7,6 +7,7 @@ import { useEventStore } from "../../src/store/useEventStore";
 import { event } from "../unit/fixtures";
 import { mockAI } from "./aiMock";
 import { resetStore } from "./render";
+import { must } from "../must";
 
 function Vendors() {
   const e = useEventStore((s) => s.events.e1);
@@ -19,9 +20,7 @@ function Vendors() {
 }
 
 const vendorCard = (name: string) =>
-  screen
-    .getAllByRole("listitem")
-    .find((li) => within(li).queryByRole("heading", { name })) as HTMLElement;
+  must(screen.getAllByRole("listitem").find((li) => within(li).queryByRole("heading", { name })));
 
 async function addVendorWithQuote(
   user: ReturnType<typeof userEvent.setup>,
@@ -71,8 +70,8 @@ describe("Vendors tab", () => {
       "Spice Route",
       "Annapurna",
     ]);
-    expect(within(rows[1] as HTMLElement).getByText("Over by ₹50")).toBeInTheDocument();
-    expect(within(rows[0] as HTMLElement).getByText("Within budget")).toBeInTheDocument();
+    expect(within(must(rows[1])).getByText("Over by ₹50")).toBeInTheDocument();
+    expect(within(must(rows[0])).getByText("Within budget")).toBeInTheDocument();
     expect(within(table).getAllByRole("columnheader")).toHaveLength(6);
     expect(await axe(container)).toHaveNoViolations();
 

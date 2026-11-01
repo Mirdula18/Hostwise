@@ -19,10 +19,22 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  ...tseslint.configs.strict,
+  // Type-aware rules: the linter sees the same types as the compiler.
+  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
+  },
   {
     files: ["**/*.{js,mjs}"],
-    languageOptions: { globals: globals.node },
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions,
+      parserOptions: { projectService: false, project: false },
+      globals: globals.node,
+    },
   },
   {
     files: ["**/*.{ts,tsx}"],
@@ -34,6 +46,10 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/ban-ts-comment": "error",
       "@typescript-eslint/consistent-type-imports": "error",
+      // House style (CLAUDE.md rule 3): `type` aliases, usually inferred from Zod.
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
+      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "no-console": "error",
       "no-warning-comments": ["error", { terms: ["todo", "fixme"], location: "anywhere" }],
@@ -77,6 +93,8 @@ export default tseslint.config(
     files: ["src/**/*.{ts,tsx}", "functions/**/*.ts"],
     plugins: { "import-x": importX },
     rules: {
+      // No `as` casts: narrow with type guards or Zod instead (`as const` is still allowed).
+      "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
       complexity: ["error", 10],
       "max-lines-per-function": ["error", { max: 40, skipBlankLines: true, skipComments: true }],
       "@typescript-eslint/no-magic-numbers": [
@@ -126,6 +144,14 @@ export default tseslint.config(
           contexts: ["TSTypeAliasDeclaration", "TSInterfaceDeclaration"],
         },
       ],
+    },
+  },
+  {
+    // Module augmentation must use empty interfaces to merge with Vitest's own types.
+    files: ["tests/**/*.d.ts"],
+    rules: {
+      "@typescript-eslint/consistent-type-definitions": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
     },
   },
 );

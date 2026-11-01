@@ -1,6 +1,7 @@
 import { ListChecks, Shuffle, Sparkles, Wallet } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { paths } from "./paths";
 import { BackupSection } from "../components/home/BackupSection";
 import { EventCard } from "../components/home/EventCard";
 import { Button, buttonClass } from "../components/ui/Button";
@@ -31,7 +32,7 @@ export default function Home() {
 
   const openSample = () => {
     const id = createEvent(createSampleEvent(todayIso()));
-    navigate(`/event/${id}`);
+    void navigate(paths.event(id));
   };
 
   return (
@@ -43,7 +44,7 @@ export default function Home() {
           and keeps them in sync when plans change.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link to="/intake" className={buttonClass("primary")}>
+          <Link to={paths.intake} className={buttonClass("primary")}>
             <Sparkles aria-hidden="true" className="h-4 w-4" />
             Plan a new event
           </Link>

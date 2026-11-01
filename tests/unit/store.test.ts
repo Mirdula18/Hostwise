@@ -3,6 +3,11 @@ import { createSampleEvent } from "../../src/lib/sample";
 import { migrate, STORE_KEY } from "../../src/store/migrations";
 import { UNDO_LIMIT, useEventStore } from "../../src/store/useEventStore";
 import { event } from "./fixtures";
+import { z } from "zod";
+import { parseJson } from "../../src/lib/json";
+
+/** The persisted store envelope written by zustand/persist. */
+const Saved = z.object({ version: z.number(), state: z.record(z.string(), z.unknown()) });
 
 const reset = () => useEventStore.setState({ events: {}, activeId: null, history: {} });
 
@@ -148,10 +153,10 @@ describe("useEventStore", () => {
   it("persists events and activeId (not history) under hostwise:v1", () => {
     useEventStore.getState().createEvent(event());
     useEventStore.getState().delayTask("e1", "a", 1);
-    const saved = JSON.parse(localStorage.getItem(STORE_KEY) ?? "{}");
+    const saved = Saved.parse(parseJson(localStorage.getItem(STORE_KEY) ?? "{}"));
     expect(saved.version).toBe(1);
     expect(Object.keys(saved.state)).toEqual(["events", "activeId"]);
-    expect(saved.state.events.e1.profile.title).toBe("Test");
+    expect(saved.state).toMatchObject({ events: { e1: { profile: { title: "Test" } } } });
   });
 });
 

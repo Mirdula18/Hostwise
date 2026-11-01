@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import NotFound from "./NotFound";
+import { paths } from "./paths";
 import { ChangeBox } from "../components/change/ChangeBox";
 import { DiffPreview } from "../components/change/DiffPreview";
 import { StageView, type Stage } from "../components/change/StageView";
@@ -86,25 +87,20 @@ export default function Change() {
 
   const parse = useMemo(
     () =>
-      debounce(async (text: string) => {
+      debounce((text: string) => {
         const e = eventRef.current;
         if (!e) return;
         setStage({ kind: "parsing" });
         setAiError(null);
-        try {
-          const request = await callAI(
-            "parse_change",
-            parseChangeInput(e, text, today),
-            ChangeRequest,
-          );
-          await runRef.current(request);
-        } catch (err) {
-          setStage({ kind: "input" });
-          setAiError({
-            message: err instanceof AIError ? err.message : "Something went wrong.",
-            text,
+        callAI("parse_change", parseChangeInput(e, text, today), ChangeRequest)
+          .then((request) => runRef.current(request))
+          .catch((err: unknown) => {
+            setStage({ kind: "input" });
+            setAiError({
+              message: err instanceof AIError ? err.message : "Something went wrong.",
+              text,
+            });
           });
-        }
       }, AI_DEBOUNCE_MS),
     [today],
   );
@@ -133,7 +129,7 @@ export default function Change() {
       label: "Undo",
       onClick: () => undo(event.id),
     });
-    navigate(`/event/${event.id}`);
+    void navigate(paths.event(event.id));
   };
 
   const busy = stage.kind === "parsing" || stage.kind === "ranking";
@@ -141,7 +137,7 @@ export default function Change() {
   return (
     <div className="space-y-6">
       <Link
-        to={`/event/${event.id}`}
+        to={paths.event(event.id)}
         className="inline-flex min-h-11 items-center gap-1 font-semibold text-brand underline"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />

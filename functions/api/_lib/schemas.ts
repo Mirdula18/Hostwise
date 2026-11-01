@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { LIMITS, TEXT } from "../../../src/lib/constants";
+import { AITaskName } from "../../../src/schemas/ai";
 import {
   AgeGroup,
   EventProfile,
@@ -19,7 +20,7 @@ const IntakeAnswers = z
   .object({
     occasion: Occasion,
     title: Text(TEXT.NAME),
-    date: z.string().date(),
+    date: z.iso.date(),
     guestCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX),
     totalBudget: z.number().int().positive(),
     currency: Text(LIMITS.CURRENCY_CODE_LENGTH),
@@ -46,8 +47,8 @@ export const TaskInputs = {
   parse_change: z
     .object({
       text: z.string().min(1).max(TEXT.CHANGE),
-      today: z.string().date(),
-      eventDate: z.string().date(),
+      today: z.iso.date(),
+      eventDate: z.iso.date(),
       currency: Text(LIMITS.CURRENCY_CODE_LENGTH),
       guestCount: z.number().int().min(1).max(LIMITS.GUESTS_MAX),
       totalBudget: z.number().int().positive(),
@@ -96,12 +97,11 @@ export const TaskInputs = {
       ...FixHint,
     })
     .strict(),
-} as const;
+} as const satisfies Record<AITaskName, z.ZodType>;
 
 /** The AI tasks the proxy accepts; there is no free-form prompt task. */
-export type TaskName = keyof typeof TaskInputs;
-export const TASK_NAMES = Object.keys(TaskInputs) as TaskName[];
+export type TaskName = AITaskName;
+export const TASK_NAMES = AITaskName.options;
 
-export const RequestEnvelope = z
-  .object({ task: z.enum(TASK_NAMES as [TaskName, ...TaskName[]]), input: z.unknown() })
-  .strict();
+/** The request body: one known task name and its input (validated per task afterwards). */
+export const RequestEnvelope = z.object({ task: AITaskName, input: z.unknown() }).strict();

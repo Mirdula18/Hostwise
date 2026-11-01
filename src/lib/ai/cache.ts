@@ -1,8 +1,9 @@
 /** JSON with object keys sorted, so equal inputs always produce the same string. */
 export function stableStringify(value: unknown): string {
-  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (value === undefined) return "null";
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
-  const entries = Object.entries(value as Record<string, unknown>)
+  const entries = Object.entries(value)
     .filter(([, v]) => v !== undefined)
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`).join(",")}}`;
@@ -31,8 +32,8 @@ export class LRUCache<V> {
   constructor(private readonly max = DEFAULT_CACHE_SIZE) {}
 
   get(key: string): V | undefined {
-    if (!this.map.has(key)) return undefined;
-    const value = this.map.get(key) as V;
+    const value = this.map.get(key);
+    if (value === undefined) return undefined;
     this.map.delete(key);
     this.map.set(key, value);
     return value;

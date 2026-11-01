@@ -2,6 +2,7 @@
 import { callGemini, DEFAULT_MODEL } from "../../functions/api/_lib/gemini";
 import { RateLimiter } from "../../functions/api/_lib/rateLimit";
 import { createHandler, isAllowedOrigin, MAX_BODY_BYTES } from "../../functions/api/gemini";
+import { must, urlOf } from "../must";
 
 const KEY = "test-secret-key-that-must-never-leak-9876";
 const env = { GEMINI_API_KEY: KEY, GEMINI_MODEL: "gemini-test-flash" };
@@ -32,7 +33,7 @@ function geminiReply(payload: unknown, status = 200) {
   );
 }
 
-function setup(fetchImpl = vi.fn(async () => geminiReply({ questions: ["Q1?"] }))) {
+function setup(fetchImpl = vi.fn(() => Promise.resolve(geminiReply({ questions: ["Q1?"] })))) {
   const handler = createHandler({ fetchImpl, limiter: new RateLimiter(20, 300_000) });
   return { handler, fetchImpl };
 }
@@ -127,7 +128,7 @@ describe("/api/gemini", () => {
 
   it("maps an upstream 500 to 502 without echoing the upstream body", async () => {
     const { handler } = setup(
-      vi.fn(async () => new Response(`internal secret details ${KEY}`, { status: 500 })),
+      vi.fn(() => Promise.resolve(new Response(`internal secret details ${KEY}`, { status: 500 }))),
     );
     const res = await handler({
       request: req({ task: "vendor_questions", input: vendorInput }),
@@ -155,7 +156,7 @@ describe("/api/gemini", () => {
       new Response("{}", { status: 200 }),
     ];
     for (const reply of replies) {
-      const { handler } = setup(vi.fn(async () => reply));
+      const { handler } = setup(vi.fn(() => Promise.resolve(reply)));
       const res = await handler({
         request: req({ task: "vendor_questions", input: vendorInput }),
         env,
@@ -181,9 +182,11 @@ describe("isAllowedOrigin", () => {
 
 describe("callGemini", () => {
   it("uses the default model when none is set and rejects unsafe model names", async () => {
-    const fetchImpl = vi.fn(async (_url: string | URL | Request) => geminiReply({ ok: true }));
+    const fetchImpl = vi.fn((_url: string | URL | Request) =>
+      Promise.resolve(geminiReply({ ok: true })),
+    );
     await callGemini({ GEMINI_API_KEY: "k" }, "plan", {}, fetchImpl);
-    expect(String(fetchImpl.mock.calls[0]?.[0])).toContain(`models/${DEFAULT_MODEL}:`);
+    expect(urlOf(must(fetchImpl.mock.calls[0])[0])).toContain(`models/${DEFAULT_MODEL}:`);
     const bad = await callGemini(
       { GEMINI_API_KEY: "k", GEMINI_MODEL: "x/../y?key=1" },
       "plan",
@@ -198,7 +201,7 @@ describe("callGemini", () => {
       env,
       "plan",
       {},
-      vi.fn(async () => new Response("{}")),
+      vi.fn(() => Promise.resolve(new Response("{}"))),
     );
     expect(empty).toEqual({ ok: false, error: { status: 502, code: "bad_output" } });
     const text = new Response(
@@ -208,7 +211,7 @@ describe("callGemini", () => {
       env,
       "plan",
       {},
-      vi.fn(async () => text),
+      vi.fn(() => Promise.resolve(text)),
     );
     expect(notJson).toEqual({ ok: false, error: { status: 502, code: "bad_output" } });
   });
@@ -218,7 +221,7 @@ describe("callGemini", () => {
       env,
       "plan",
       {},
-      vi.fn(async () => Promise.reject(new TypeError("down"))),
+      vi.fn(() => Promise.resolve(Promise.reject(new TypeError("down")))),
     );
     expect(r).toEqual({ ok: false, error: { status: 502, code: "upstream_error" } });
   });

@@ -9,6 +9,7 @@ import { useEventStore } from "../../src/store/useEventStore";
 import { event } from "../unit/fixtures";
 import { mockAI } from "./aiMock";
 import { resetStore } from "./render";
+import { must } from "../must";
 
 function renderChange() {
   return render(
@@ -70,7 +71,9 @@ describe("Change flow", () => {
     expect(await axe(container)).toHaveNoViolations();
 
     await user.click(
-      within(cards[0] as HTMLElement).getByRole("button", { name: "Preview this option" }),
+      within(must(cards[0], "first option card")).getByRole("button", {
+        name: "Preview this option",
+      }),
     );
     const preview = screen.getByRole("region", { name: /Preview: Protect Food/ });
     const table = within(preview).getByRole("table", { name: "Budget before and after" });
@@ -108,7 +111,7 @@ describe("Change flow", () => {
     expect(screen.getByText(/couldn't rank these right now/)).toBeInTheDocument();
     expect(within(options).getAllByRole("listitem")[0]).not.toHaveTextContent("Recommended");
     await user.click(
-      within(options).getAllByRole("button", { name: "Preview this option" })[0] as HTMLElement,
+      must(within(options).getAllByRole("button", { name: "Preview this option" })[0]),
     );
     await user.click(screen.getByRole("button", { name: "Apply this change" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Test" })).toBeInTheDocument();
